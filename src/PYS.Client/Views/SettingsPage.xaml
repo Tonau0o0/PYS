@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             x:Class="PYS.Client.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Ayarlar">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16" MaximumWidthRequest="560" HorizontalOptions="Center">
+
+            <Label Text="Hesap" FontSize="18" FontAttributes="Bold" />
+            <Label FontSize="12" TextColor="Gray">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Kullanıcı adı: @" />
+                        <Span Text="{Binding UserName}" FontAttributes="Bold" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+
+            <!-- E-posta Değiştir -->
+            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="16" Margin="0,8,0,0">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="E-posta Değiştir" FontSize="15" FontAttributes="Bold" />
+                    <Entry Text="{Binding Email}" Keyboard="Email" Placeholder="ad@ornek.com" />
+                    <Button Text="E-postayı Kaydet" Command="{Binding ChangeEmailCommand}"
+                            BackgroundColor="{StaticResource Primary}" TextColor="White" HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Şifre Değiştir -->
+            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="16">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Text="Şifre Değiştir" FontSize="15" FontAttributes="Bold" />
+                    <Label Grid.Row="1" Grid.Column="0" Text="Mevcut şifreni güncelle." FontSize="12" TextColor="Gray" />
+                    <Button Grid.RowSpan="2" Grid.Column="1" Text="Değiştir" Command="{Binding ChangePasswordCommand}"
+                            BackgroundColor="DarkSlateBlue" TextColor="White" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Profil -->
+            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="16">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Text="Profil" FontSize="15" FontAttributes="Bold" />
+                    <Label Grid.Row="1" Grid.Column="0" Text="İsim, avatar ve renk." FontSize="12" TextColor="Gray" />
+                    <Button Grid.RowSpan="2" Grid.Column="1" Text="Aç" Command="{Binding ProfileCommand}"
+                            BackgroundColor="LightSlateGray" TextColor="White" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+            <Label Text="{Binding SuccessMessage}" TextColor="Green" FontSize="12"
+                   IsVisible="{Binding SuccessMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Button Text="🚪 Çıkış Yap" Command="{Binding LogoutCommand}"
+                    BackgroundColor="IndianRed" TextColor="White" Margin="0,16,0,0" />
+            <Button Text="← Geri" Command="{Binding BackCommand}"
+                    BackgroundColor="LightGray" TextColor="Black" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

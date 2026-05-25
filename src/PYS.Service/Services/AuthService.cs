@@ -242,6 +242,6 @@ public sealed class AuthService : IAuthService
     private AuthResponseDto BuildAuthResponse(User user)
     {
         var (token, expiresAt) = _tokenService.GenerateAccessToken(user);
-        return new AuthResponseDto(token, expiresAt, user.Id, user.UserName, user.FullName, user.Role, user.ColorHex, user.AvatarUrl);
+        return new AuthResponseDto(token, expiresAt, user.Id, user.UserName, user.Email, user.FullName, user.Role, user.ColorHex, user.AvatarUrl);
     }
 }

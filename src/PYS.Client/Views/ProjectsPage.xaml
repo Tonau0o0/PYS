@@ -10,8 +10,7 @@
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="+ Yeni Proje" Command="{Binding NewProjectCommand}" />
         <ToolbarItem Text="Profil" Command="{Binding ProfileCommand}" />
-        <ToolbarItem Text="Şifre" Command="{Binding ChangePasswordCommand}" />
-        <ToolbarItem Text="Çıkış" Command="{Binding LogoutCommand}" />
+        <ToolbarItem Text="⚙ Ayarlar" Command="{Binding SettingsCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12">

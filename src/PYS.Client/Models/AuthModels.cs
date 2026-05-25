@@ -13,6 +13,7 @@ public sealed record AuthResponse(
     DateTime ExpiresAt,
     int UserId,
     string UserName,
+    string Email,
     string FullName,
     UserRole Role,
     string Color,

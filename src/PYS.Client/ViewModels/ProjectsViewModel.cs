@@ -106,15 +106,8 @@ public sealed partial class ProjectsViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task LogoutAsync()
-    {
-        _auth.Clear();
-        await Shell.Current.GoToAsync("//login");
-    }
-
-    [RelayCommand]
-    private static Task ChangePasswordAsync() => Shell.Current.GoToAsync("change-password");
-
-    [RelayCommand]
     private static Task ProfileAsync() => Shell.Current.GoToAsync("profile");
+
+    [RelayCommand]
+    private static Task SettingsAsync() => Shell.Current.GoToAsync("settings");
 }
