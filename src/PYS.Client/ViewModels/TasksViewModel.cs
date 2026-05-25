@@ -45,16 +45,30 @@ public sealed partial class TasksViewModel : BaseViewModel
         if (!Enum.TryParse<TaskStatusEnum>(targetStatus, out var newStatus)) return;
         if (item.Status == newStatus) return;
 
+        var source = ColumnFor(item.Status);
+        var target = ColumnFor(newStatus);
+        var moved = item with { Status = newStatus };   // record immutable → güncel kopya
+
+        ErrorMessage = null;
+
+        // 1) Optimistik UI — kartı anında yeni kolona taşı (main thread, SKILL #4)
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            source.Remove(item);
+            target.Add(moved);
+        });
+
+        // 2) Backend'i güncelle; sunucu reddederse gerçek durumu tam reload ile geri al
         try
         {
-            IsBusy = true;
-            ErrorMessage = null;
             await _api.UpdateTaskAsync(item.Id, new UpdateTaskRequest(
                 item.Title, item.Description, newStatus, item.Priority, item.DueDate, item.AssigneeId));
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex);
             await LoadAsync();
         }
-        catch (Exception ex) { HandleException(ex); }
-        finally { IsBusy = false; }
     }
 
     [RelayCommand]
@@ -66,27 +80,20 @@ public sealed partial class TasksViewModel : BaseViewModel
             IsBusy = true;
             ErrorMessage = null;
             var data = await _api.GetTasksAsync(ProjectId);
-            ProjectName = data.FirstOrDefault()?.ProjectName ?? $"Proje #{ProjectId}";
 
-            TodoColumn.Clear();
-            InProgressColumn.Clear();
-            InReviewColumn.Clear();
-            DoneColumn.Clear();
-            BlockedColumn.Clear();
-
-            foreach (var t in data)
+            // UI GÜNCELLE — tüm kolon mutasyonları yalnız main thread'de (SKILL #4)
+            await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                var bucket = t.Status switch
-                {
-                    TaskStatusEnum.Todo => TodoColumn,
-                    TaskStatusEnum.InProgress => InProgressColumn,
-                    TaskStatusEnum.InReview => InReviewColumn,
-                    TaskStatusEnum.Done => DoneColumn,
-                    TaskStatusEnum.Blocked => BlockedColumn,
-                    _ => TodoColumn
-                };
-                bucket.Add(t);
-            }
+                ProjectName = data.FirstOrDefault()?.ProjectName ?? $"Proje #{ProjectId}";
+
+                TodoColumn.Clear();
+                InProgressColumn.Clear();
+                InReviewColumn.Clear();
+                DoneColumn.Clear();
+                BlockedColumn.Clear();
+
+                foreach (var t in data) ColumnFor(t.Status).Add(t);
+            });
         }
         catch (Exception ex) { HandleException(ex); }
         finally { IsBusy = false; IsRefreshing = false; }
@@ -100,8 +107,18 @@ public sealed partial class TasksViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private static Task OpenTaskAsync(TaskItem item)
-        => item is null ? Task.CompletedTask : Shell.Current.GoToAsync($"task-edit?id={item.Id}&projectId={item.ProjectId}");
+    private async Task TaskMenuAsync(TaskItem item)
+    {
+        if (item is null) return;
+
+        var choice = await Shell.Current.DisplayActionSheetAsync(
+            item.Title, "İptal", null, "Düzenle", "Sil");
+
+        if (choice == "Düzenle")
+            await Shell.Current.GoToAsync($"task-edit?id={item.Id}&projectId={item.ProjectId}");
+        else if (choice == "Sil")
+            await DeleteTaskAsync(item);
+    }
 
     [RelayCommand]
     private async Task DeleteTaskAsync(TaskItem item)
@@ -115,20 +132,21 @@ public sealed partial class TasksViewModel : BaseViewModel
         {
             IsBusy = true;
             await _api.DeleteTaskAsync(item.Id);
-            RemoveTaskLocally(item);
+            await MainThread.InvokeOnMainThreadAsync(() => ColumnFor(item.Status).Remove(item));
         }
         catch (Exception ex) { HandleException(ex); }
         finally { IsBusy = false; }
     }
 
-    private void RemoveTaskLocally(TaskItem item)
+    private ObservableCollection<TaskItem> ColumnFor(TaskStatusEnum status) => status switch
     {
-        TodoColumn.Remove(item);
-        InProgressColumn.Remove(item);
-        InReviewColumn.Remove(item);
-        DoneColumn.Remove(item);
-        BlockedColumn.Remove(item);
-    }
+        TaskStatusEnum.Todo => TodoColumn,
+        TaskStatusEnum.InProgress => InProgressColumn,
+        TaskStatusEnum.InReview => InReviewColumn,
+        TaskStatusEnum.Done => DoneColumn,
+        TaskStatusEnum.Blocked => BlockedColumn,
+        _ => TodoColumn
+    };
 
     [RelayCommand]
     private static Task BackAsync() => Shell.Current.GoToAsync("..");

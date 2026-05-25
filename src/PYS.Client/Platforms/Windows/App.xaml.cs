@@ -17,6 +17,14 @@ public partial class App : MauiWinUIApplication
 	public App()
 	{
 		this.InitializeComponent();
+
+		// WinUI XAML thread'indeki exception'lar AppDomain.UnhandledException'a uğramaz;
+		// burada yakalayıp crash.log'a yazıyoruz. Handled=true → süreç ölmez, stack görünür.
+		this.UnhandledException += (s, e) =>
+		{
+			PYS.Client.App.LogException("WinUI.UnhandledException", e.Exception);
+			e.Handled = true;
+		};
 	}
 
 	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();

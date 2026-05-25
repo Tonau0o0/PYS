@@ -8,12 +8,13 @@ using TaskStatusEnum = PYS.Core.Common.TaskStatus;
 
 namespace PYS.Client.ViewModels;
 
-[QueryProperty(nameof(TaskId), "id")]
+[QueryProperty(nameof(TaskIdQuery), "id")]
 [QueryProperty(nameof(ProjectId), "projectId")]
 [QueryProperty(nameof(InitialStatus), "initialStatus")]
 public sealed partial class TaskEditViewModel : BaseViewModel
 {
     private readonly PysApi _api;
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _membersLoaded;
     private bool _taskLoaded;
 
@@ -21,6 +22,16 @@ public sealed partial class TaskEditViewModel : BaseViewModel
 
     [ObservableProperty]
     private int? _taskId;
+
+    /// <summary>
+    /// Shell route parametresi <c>id</c> string olarak gelir. Doğrudan <see cref="TaskId"/>
+    /// (int?) hedeflemek MAUI'de <see cref="InvalidCastException"/> fırlatır (string→Nullable&lt;int&gt;
+    /// dönüşümü desteklenmez). Burada güvenli parse edip TaskId'ye aktarıyoruz.
+    /// </summary>
+    public string? TaskIdQuery
+    {
+        set => TaskId = int.TryParse(value, out var id) ? id : null;
+    }
 
     [ObservableProperty]
     private int _projectId;
@@ -84,44 +95,56 @@ public sealed partial class TaskEditViewModel : BaseViewModel
 
     public async Task LoadAsync()
     {
-        if (ProjectId == 0) return;
+        if (ProjectId == 0) return;            // Guard: query parametreleri henüz hazır değil
 
+        await _gate.WaitAsync();               // Çift tetikleme yarışını serialize et (skip etme, sıraya al)
         try
         {
             IsBusy = true;
             ErrorMessage = null;
 
-            if (!_membersLoaded)
-            {
-                var members = await _api.GetMembersAsync(ProjectId);
-                ProjectMembers.Clear();
-                foreach (var m in members) ProjectMembers.Add(m);
-                _membersLoaded = true;
-            }
+            // 1) VERİ ÇEK — UI'a dokunmaz, continuation hangi thread'de olursa olsun güvenli
+            IReadOnlyList<ProjectMemberItem>? members =
+                _membersLoaded ? null : await _api.GetMembersAsync(ProjectId);
 
+            TaskItem? task = null;
             if (TaskId is not null && !_taskLoaded)
             {
                 var tasks = await _api.GetTasksAsync(ProjectId);
-                var t = tasks.FirstOrDefault(x => x.Id == TaskId.Value);
-                if (t is null)
+                task = tasks.FirstOrDefault(x => x.Id == TaskId.Value);
+                if (task is null)
                 {
                     ErrorMessage = "Görev bulunamadı.";
                     return;
                 }
-
-                Title = t.Title;
-                Description = t.Description ?? string.Empty;
-                Status = t.Status;
-                Priority = t.Priority;
-                HasDueDate = t.DueDate.HasValue;
-                DueDate = t.DueDate ?? DateTime.Today.AddDays(7);
-                IsDone = t.Status == TaskStatusEnum.Done;
-                SelectedAssignee = ProjectMembers.FirstOrDefault(m => m.UserId == t.AssigneeId);
-                _taskLoaded = true;
             }
+
+            // 2) UI GÜNCELLE — ObservableCollection + bound property'ler yalnız main thread'de (SKILL #4)
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (members is not null)
+                {
+                    ProjectMembers.Clear();
+                    foreach (var m in members) ProjectMembers.Add(m);
+                    _membersLoaded = true;
+                }
+
+                if (task is not null)
+                {
+                    Title = task.Title;
+                    Description = task.Description ?? string.Empty;
+                    Status = task.Status;
+                    Priority = task.Priority;
+                    HasDueDate = task.DueDate.HasValue;
+                    DueDate = task.DueDate ?? DateTime.Today.AddDays(7);
+                    IsDone = task.Status == TaskStatusEnum.Done;
+                    SelectedAssignee = ProjectMembers.FirstOrDefault(m => m.UserId == task.AssigneeId);
+                    _taskLoaded = true;
+                }
+            });
         }
         catch (Exception ex) { HandleException(ex); }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _gate.Release(); }
     }
 
     [RelayCommand]

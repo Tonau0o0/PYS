@@ -19,9 +19,6 @@
                     Margin="0,4" Padding="0"
                     BackgroundColor="{StaticResource CardBg}">
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer
-                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=OpenTaskCommand}"
-                        CommandParameter="{Binding .}" />
                     <DragGestureRecognizer CanDrag="True"
                         DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=DragStartedCommand}"
                         DragStartingCommandParameter="{Binding .}" />
@@ -30,8 +27,15 @@
                     <BoxView Grid.Column="0"
                              Color="{Binding AssigneeColor, Converter={StaticResource StringToColorConverter}}" />
                     <VerticalStackLayout Grid.Column="1" Padding="10" Spacing="6">
-                        <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="13"
-                               TextColor="{StaticResource CardText}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="{Binding Title}" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource CardText}" VerticalOptions="Center" />
+                            <Button Grid.Column="1" Text="⋮" FontSize="18" FontAttributes="Bold"
+                                    Padding="0" WidthRequest="32" HeightRequest="32"
+                                    BackgroundColor="Transparent" TextColor="{StaticResource CardSubText}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=TaskMenuCommand}"
+                                    CommandParameter="{Binding .}" />
+                        </Grid>
                         <Label Text="{Binding Description}" FontSize="11"
                                TextColor="{StaticResource CardSubText}"
                                LineBreakMode="TailTruncation" MaxLines="2"

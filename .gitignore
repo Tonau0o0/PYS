@@ -1,0 +1,25 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# MAUI / publish
+[Pp]ublish/
+*.binlog
+
+# Runtime / local
+crash.log
+Storage/                 # sunucu tarafı yüklenen dosyalar (proje kaynakları, avatarlar)
+appsettings.*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
