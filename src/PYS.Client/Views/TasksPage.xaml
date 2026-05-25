@@ -79,7 +79,7 @@
         <ToolbarItem Text="← Projeler" Command="{Binding BackCommand}" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,Auto,*" Padding="8" RowSpacing="8">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="8" RowSpacing="8">
         <Label Grid.Row="0" Text="Görevleri sürükleyip kolonlar arasında taşıyabilirsin."
                FontSize="11" TextColor="Gray" Margin="4,0" />
         <Label Grid.Row="1" Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
@@ -255,5 +255,70 @@
 
             </HorizontalStackLayout>
         </ScrollView>
+
+        <!-- PROJE KAYNAKLARI PANELI (dosyalar + YouTube) -->
+        <Border Grid.Row="3" HeightRequest="220" StrokeShape="RoundRectangle 8"
+                Stroke="#D1D5DB" StrokeThickness="1" Padding="10" BackgroundColor="#FAFAFA"
+                BindingContext="{Binding Resources}" x:DataType="vm:ResourcesViewModel">
+            <Grid RowDefinitions="Auto,*" RowSpacing="6">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                    <Label Grid.Column="0" Text="📂 Proje Kaynakları" FontAttributes="Bold" FontSize="14"
+                           TextColor="{StaticResource ColumnText}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="+ Dosya" FontSize="11" Padding="10,4"
+                            BackgroundColor="{StaticResource Primary}" TextColor="White"
+                            Command="{Binding AddFileCommand}" />
+                    <Button Grid.Column="2" Text="+ YouTube" FontSize="11" Padding="10,4"
+                            BackgroundColor="#FF0000" TextColor="White"
+                            Command="{Binding AddYouTubeCommand}" />
+                </Grid>
+
+                <CollectionView Grid.Row="1" ItemsSource="{Binding Resources}">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.EmptyView>
+                        <Label Text="Henüz kaynak yok. Dosya veya YouTube linki ekle."
+                               FontSize="12" TextColor="{StaticResource CardSubText}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProjectResourceItem">
+                            <Border WidthRequest="160" StrokeShape="RoundRectangle 8"
+                                    Stroke="#D1D5DB" StrokeThickness="1" Padding="0" BackgroundColor="White">
+                                <Grid RowDefinitions="90,Auto,Auto" RowSpacing="2">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ResourcesViewModel}}, Path=OpenResourceCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+
+                                    <!-- Önizleme -->
+                                    <Grid Grid.Row="0" BackgroundColor="#111827">
+                                        <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill"
+                                               IsVisible="{Binding IsYouTube}" />
+                                        <Label Text="📄" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center"
+                                               IsVisible="{Binding IsFile}" />
+                                        <Label Text="▶" FontSize="30" TextColor="White" FontAttributes="Bold"
+                                               HorizontalOptions="Center" VerticalOptions="Center"
+                                               IsVisible="{Binding IsYouTube}" />
+                                        <Button Text="✕" FontSize="11" Padding="0" WidthRequest="26" HeightRequest="26"
+                                                HorizontalOptions="End" VerticalOptions="Start" Margin="2"
+                                                BackgroundColor="#80000000" TextColor="White"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ResourcesViewModel}}, Path=DeleteResourceCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </Grid>
+
+                                    <Label Grid.Row="1" Text="{Binding Title}" FontSize="12" FontAttributes="Bold"
+                                           Margin="8,4,8,0" LineBreakMode="TailTruncation" MaxLines="1"
+                                           TextColor="{StaticResource CardText}" />
+                                    <Label Grid.Row="2" Text="{Binding MetaText}" FontSize="10"
+                                           Margin="8,0,8,8" TextColor="{StaticResource CardSubText}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>

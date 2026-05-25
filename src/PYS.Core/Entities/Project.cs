@@ -23,4 +23,5 @@ public class Project : BaseEntity
     public ICollection<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();
     public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
     public ICollection<ProjectInvitation> Invitations { get; set; } = new List<ProjectInvitation>();
+    public ICollection<ProjectResource> Resources { get; set; } = new List<ProjectResource>();
 }

@@ -28,7 +28,7 @@ public sealed class PysApi
         => _api.PutAsync<AuthResponse>("/api/auth/me/email", new UpdateEmailRequest(email), ct);
 
     public Task<AuthResponse> UploadAvatarAsync(Stream content, string fileName, CancellationToken ct = default)
-        => _api.PostFileAsync<AuthResponse>("/api/auth/me/avatar", content, fileName, "file", ct);
+        => _api.PostFileAsync<AuthResponse>("/api/auth/me/avatar", content, fileName, ct: ct);
 
     // Projects
     public Task<ProjectItem[]> GetProjectsAsync(int? status, CancellationToken ct = default)
@@ -74,4 +74,18 @@ public sealed class PysApi
 
     public Task DeleteTaskAsync(int id, CancellationToken ct = default)
         => _api.DeleteAsync($"/api/tasks/{id}", ct);
+
+    // Project Resources
+    public Task<ProjectResourceItem[]> GetResourcesAsync(int projectId, CancellationToken ct = default)
+        => _api.GetAsync<ProjectResourceItem[]>($"/api/projects/{projectId}/resources", ct);
+
+    public Task<ProjectResourceItem> AddYouTubeAsync(int projectId, string title, string url, CancellationToken ct = default)
+        => _api.PostAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/link", new AddYouTubeRequest(title, url), ct);
+
+    public Task<ProjectResourceItem> UploadResourceAsync(int projectId, Stream content, string fileName, string title, CancellationToken ct = default)
+        => _api.PostFileAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/file", content, fileName,
+            new Dictionary<string, string> { ["title"] = title }, ct: ct);
+
+    public Task DeleteResourceAsync(int projectId, int resourceId, CancellationToken ct = default)
+        => _api.DeleteAsync($"/api/projects/{projectId}/resources/{resourceId}", ct);
 }

@@ -29,9 +29,20 @@ public sealed partial class TasksViewModel : BaseViewModel
 
     private TaskItem? _draggedTask;
 
-    public TasksViewModel(PysApi api) => _api = api;
+    public ResourcesViewModel Resources { get; }
 
-    partial void OnProjectIdChanged(int value) => FireAndForget(LoadAsync);
+    public TasksViewModel(PysApi api, ResourcesViewModel resources)
+    {
+        _api = api;
+        Resources = resources;
+    }
+
+    partial void OnProjectIdChanged(int value)
+    {
+        Resources.ProjectId = value;
+        FireAndForget(LoadAsync);
+        FireAndForget(Resources.LoadAsync);
+    }
 
     [RelayCommand]
     private void DragStarted(TaskItem item) => _draggedTask = item;

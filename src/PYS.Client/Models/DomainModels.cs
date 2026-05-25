@@ -57,6 +57,41 @@ public sealed record TaskItem(
     DateTime? UpdatedAt,
     string? UpdatedBy);
 
+public sealed record ProjectResourceItem(
+    int Id,
+    int ProjectId,
+    ResourceType Type,
+    string Title,
+    string? Url,
+    string? FileName,
+    string? ContentType,
+    long? SizeBytes,
+    string? YouTubeId,
+    DateTime CreatedAt,
+    string? CreatedBy)
+{
+    public bool IsYouTube => Type == ResourceType.YouTube;
+    public bool IsFile => Type == ResourceType.File;
+
+    public string? ThumbnailUrl => IsYouTube && !string.IsNullOrEmpty(YouTubeId)
+        ? $"https://img.youtube.com/vi/{YouTubeId}/mqdefault.jpg"
+        : null;
+
+    public string MetaText => IsYouTube
+        ? "▶ YouTube"
+        : $"📄 {FormatSize(SizeBytes)}";
+
+    private static string FormatSize(long? bytes)
+    {
+        if (bytes is not long b) return "Dosya";
+        if (b < 1024) return $"{b} B";
+        if (b < 1024 * 1024) return $"{b / 1024.0:0.#} KB";
+        return $"{b / (1024.0 * 1024.0):0.#} MB";
+    }
+}
+
+public sealed record AddYouTubeRequest(string Title, string Url);
+
 public sealed record CreateProjectRequest(string Name, string? Description, ProjectStatus Status, DateTime StartDate, DateTime? EndDate);
 public sealed record UpdateProjectRequest(string Name, string? Description, ProjectStatus Status, DateTime StartDate, DateTime? EndDate);
 

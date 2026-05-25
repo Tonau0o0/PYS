@@ -39,6 +39,8 @@ public static class MauiProgram
         builder.Services.AddTransient<TaskEditViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<ResourcesViewModel>();
+        builder.Services.AddTransient<VideoPlayerViewModel>();
 
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<RegisterPage>();
@@ -50,6 +52,7 @@ public static class MauiProgram
         builder.Services.AddTransient<TaskEditPage>();
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddTransient<VideoPlayerPage>();
 
         return builder.Build();
     }

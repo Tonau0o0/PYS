@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<ProjectInvitation> ProjectInvitations => Set<ProjectInvitation>();
+    public DbSet<ProjectResource> ProjectResources => Set<ProjectResource>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -94,5 +94,6 @@ app.MapGet("/", () => Results.Ok(new { service = "PYS.API", status = "running" }
 app.MapAuthEndpoints();
 app.MapProjectEndpoints();
 app.MapTaskEndpoints();
+app.MapResourceEndpoints();
 
 app.Run();

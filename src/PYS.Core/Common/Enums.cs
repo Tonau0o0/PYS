@@ -46,3 +46,9 @@ public enum InvitationStatus
     Accepted = 1,
     Cancelled = 2
 }
+
+public enum ResourceType
+{
+    File = 0,
+    YouTube = 1
+}
