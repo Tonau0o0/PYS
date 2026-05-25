@@ -1,0 +1,6 @@
+@PYS.API_HostAddress = http://localhost:5014
+
+GET {{PYS.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

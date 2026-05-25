@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             x:Class="PYS.Client.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Shell.NavBarIsVisible="False"
+             Title="Giriş">
+
+    <Grid RowDefinitions="*,Auto,*" Padding="40">
+        <VerticalStackLayout Grid.Row="1" Spacing="16" MaximumWidthRequest="420" HorizontalOptions="Center">
+            <Label Text="PYS" FontSize="36" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Label Text="Proje Yönetim Sistemi" FontSize="14" TextColor="Gray" HorizontalOptions="Center" />
+
+            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="20" Margin="0,20,0,0">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Kullanıcı Adı" FontSize="12" />
+                    <Entry Text="{Binding UserName}" Placeholder="örn: alice" />
+
+                    <Label Text="Şifre" FontSize="12" />
+                    <Entry Text="{Binding Password}" IsPassword="True" Placeholder="••••••" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           FontSize="12"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                    <Button Text="Giriş Yap"
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White"
+                            HeightRequest="44" />
+
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+                    <Button Text="Hesabınız yok mu? Kayıt olun"
+                            Command="{Binding GoRegisterCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource Primary}"
+                            FontSize="12" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

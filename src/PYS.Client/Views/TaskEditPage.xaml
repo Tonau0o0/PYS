@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             x:Class="PYS.Client.Views.TaskEditPage"
+             x:DataType="vm:TaskEditViewModel"
+             Title="{Binding PageTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12" MaximumWidthRequest="640" HorizontalOptions="Center">
+
+            <Label Text="Başlık *" FontSize="12" />
+            <Entry Text="{Binding Title}" />
+
+            <Label Text="Açıklama" FontSize="12" />
+            <Editor Text="{Binding Description}" HeightRequest="80" />
+
+            <Label Text="Durum" FontSize="12" />
+            <Picker ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding Status}" />
+
+            <Label Text="Öncelik" FontSize="12" />
+            <Picker ItemsSource="{Binding PriorityOptions}" SelectedItem="{Binding Priority}" />
+
+            <Label Text="Atanan (proje üyelerinden)" FontSize="12" />
+            <Picker ItemsSource="{Binding ProjectMembers}"
+                    SelectedItem="{Binding SelectedAssignee}"
+                    ItemDisplayBinding="{Binding FullName}"
+                    Title="(Atanmadı)" />
+
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox IsChecked="{Binding HasDueDate}" />
+                <Label Text="Bitiş tarihi belirle" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+            <DatePicker Date="{Binding DueDate}" Format="dd.MM.yyyy"
+                        IsEnabled="{Binding HasDueDate}" IsVisible="{Binding HasDueDate}" />
+
+            <HorizontalStackLayout Spacing="8" Margin="0,12,0,0">
+                <CheckBox IsChecked="{Binding IsDone}" />
+                <Label Text="Tamamlandı olarak işaretle" VerticalOptions="Center" FontAttributes="Bold" />
+            </HorizontalStackLayout>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,16,0,0">
+                <Button Grid.Column="0" Text="İptal" Command="{Binding CancelCommand}"
+                        BackgroundColor="LightGray" TextColor="Black" />
+                <Button Grid.Column="1" Text="Kaydet" Command="{Binding SaveCommand}"
+                        BackgroundColor="{StaticResource Primary}" TextColor="White"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

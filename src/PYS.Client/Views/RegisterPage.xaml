@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             x:Class="PYS.Client.Views.RegisterPage"
+             x:DataType="vm:RegisterViewModel"
+             Title="Kayıt">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="40" Spacing="12" MaximumWidthRequest="480" HorizontalOptions="Center">
+            <Label Text="Yeni Hesap" FontSize="24" FontAttributes="Bold" />
+
+            <Label Text="Kullanıcı Adı" FontSize="12" />
+            <Entry Text="{Binding UserName}" Placeholder="kullaniciadi" />
+
+            <Label Text="E-posta" FontSize="12" />
+            <Entry Text="{Binding Email}" Placeholder="ad@domain.com" Keyboard="Email" />
+
+            <Label Text="Ad Soyad" FontSize="12" />
+            <Entry Text="{Binding FullName}" Placeholder="Ad Soyad" />
+
+            <Label Text="Şifre (min 6)" FontSize="12" />
+            <Entry Text="{Binding Password}" IsPassword="True" />
+
+            <Label Text="Şifre (Tekrar)" FontSize="12" />
+            <Entry Text="{Binding ConfirmPassword}" IsPassword="True" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,12,0,0">
+                <Button Grid.Column="0" Text="İptal" Command="{Binding CancelCommand}"
+                        BackgroundColor="LightGray" TextColor="Black" />
+                <Button Grid.Column="1" Text="Kayıt Ol" Command="{Binding SubmitCommand}"
+                        BackgroundColor="{StaticResource Primary}" TextColor="White"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

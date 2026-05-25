@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             xmlns:models="clr-namespace:PYS.Client.Models"
+             x:Class="PYS.Client.Views.TasksPage"
+             x:DataType="vm:TasksViewModel"
+             Title="{Binding ProjectName}">
+
+    <ContentPage.Resources>
+        <Color x:Key="CardBg">#FFFFFF</Color>
+        <Color x:Key="CardText">#1F2937</Color>
+        <Color x:Key="CardSubText">#6B7280</Color>
+        <Color x:Key="ColumnText">#111827</Color>
+
+        <DataTemplate x:Key="TaskCardTemplate" x:DataType="models:TaskItem">
+            <Border StrokeShape="RoundRectangle 8"
+                    Stroke="#D1D5DB" StrokeThickness="1"
+                    Margin="0,4" Padding="0"
+                    BackgroundColor="{StaticResource CardBg}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=OpenTaskCommand}"
+                        CommandParameter="{Binding .}" />
+                    <DragGestureRecognizer CanDrag="True"
+                        DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=DragStartedCommand}"
+                        DragStartingCommandParameter="{Binding .}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="6,*">
+                    <BoxView Grid.Column="0"
+                             Color="{Binding AssigneeColor, Converter={StaticResource StringToColorConverter}}" />
+                    <VerticalStackLayout Grid.Column="1" Padding="10" Spacing="6">
+                        <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="13"
+                               TextColor="{StaticResource CardText}" />
+                        <Label Text="{Binding Description}" FontSize="11"
+                               TextColor="{StaticResource CardSubText}"
+                               LineBreakMode="TailTruncation" MaxLines="2"
+                               IsVisible="{Binding Description, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                            <Label Grid.Column="0" FontSize="10"
+                                   TextColor="{StaticResource CardSubText}" VerticalOptions="Center">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="🚩 " />
+                                        <Span Text="{Binding Priority}" FontAttributes="Bold" />
+                                        <Span Text="    " />
+                                        <Span Text="📅 " />
+                                        <Span Text="{Binding DueDate, StringFormat='{0:dd.MM.yyyy}'}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border Grid.Column="1" WidthRequest="28" HeightRequest="28"
+                                    StrokeShape="RoundRectangle 14" Stroke="Transparent"
+                                    BackgroundColor="{Binding AssigneeColor, Converter={StaticResource StringToColorConverter}}"
+                                    IsVisible="{Binding AssigneeUserName, Converter={StaticResource StringNotEmptyConverter}}">
+                                <Label Text="{Binding AssigneeUserName, Converter={StaticResource InitialsConverter}}"
+                                       TextColor="White" FontSize="11" FontAttributes="Bold"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="↻ Yenile" Command="{Binding LoadCommand}" />
+        <ToolbarItem Text="← Projeler" Command="{Binding BackCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="8" RowSpacing="8">
+        <Label Grid.Row="0" Text="Görevleri sürükleyip kolonlar arasında taşıyabilirsin."
+               FontSize="11" TextColor="Gray" Margin="4,0" />
+        <Label Grid.Row="1" Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <ScrollView Grid.Row="2" Orientation="Horizontal">
+            <HorizontalStackLayout Spacing="10" Padding="4">
+
+                <!-- TODO -->
+                <Border WidthRequest="280" StrokeShape="RoundRectangle 8" Padding="10"
+                        Stroke="#D1D5DB" StrokeThickness="1" BackgroundColor="#F5F5F5">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True"
+                            DropCommand="{Binding DropCommand}"
+                            DropCommandParameter="Todo" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <BoxView Grid.Column="0" WidthRequest="10" HeightRequest="10" Color="#9E9E9E" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Todo" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource ColumnText}" Margin="6,0,0,0" />
+                            <Label Grid.Column="2" Text="{Binding TodoColumn.Count}" FontSize="11"
+                                   TextColor="{StaticResource CardSubText}" />
+                        </Grid>
+                        <ScrollView Grid.Row="1">
+                            <CollectionView ItemsSource="{Binding TodoColumn}"
+                                            ItemTemplate="{StaticResource TaskCardTemplate}"
+                                            SelectionMode="None">
+                                <CollectionView.EmptyView>
+                                    <Label Text="(boş — sürükleyip bırakabilirsin)" FontSize="11"
+                                           TextColor="{StaticResource CardSubText}"
+                                           HorizontalOptions="Center" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </ScrollView>
+                        <Button Grid.Row="2" Text="+ Görev Ekle" FontSize="11"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}"
+                                Command="{Binding NewTaskInStatusCommand}" CommandParameter="Todo" />
+                    </Grid>
+                </Border>
+
+                <!-- IN PROGRESS -->
+                <Border WidthRequest="280" StrokeShape="RoundRectangle 8" Padding="10"
+                        Stroke="#D1D5DB" StrokeThickness="1" BackgroundColor="#FFF8E1">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True"
+                            DropCommand="{Binding DropCommand}"
+                            DropCommandParameter="InProgress" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <BoxView Grid.Column="0" WidthRequest="10" HeightRequest="10" Color="#FFC107" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="In Progress" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource ColumnText}" Margin="6,0,0,0" />
+                            <Label Grid.Column="2" Text="{Binding InProgressColumn.Count}" FontSize="11"
+                                   TextColor="{StaticResource CardSubText}" />
+                        </Grid>
+                        <ScrollView Grid.Row="1">
+                            <CollectionView ItemsSource="{Binding InProgressColumn}"
+                                            ItemTemplate="{StaticResource TaskCardTemplate}"
+                                            SelectionMode="None">
+                                <CollectionView.EmptyView>
+                                    <Label Text="(boş — sürükleyip bırakabilirsin)" FontSize="11"
+                                           TextColor="{StaticResource CardSubText}"
+                                           HorizontalOptions="Center" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </ScrollView>
+                        <Button Grid.Row="2" Text="+ Görev Ekle" FontSize="11"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}"
+                                Command="{Binding NewTaskInStatusCommand}" CommandParameter="InProgress" />
+                    </Grid>
+                </Border>
+
+                <!-- IN REVIEW -->
+                <Border WidthRequest="280" StrokeShape="RoundRectangle 8" Padding="10"
+                        Stroke="#D1D5DB" StrokeThickness="1" BackgroundColor="#E3F2FD">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True"
+                            DropCommand="{Binding DropCommand}"
+                            DropCommandParameter="InReview" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <BoxView Grid.Column="0" WidthRequest="10" HeightRequest="10" Color="#2196F3" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="In Review" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource ColumnText}" Margin="6,0,0,0" />
+                            <Label Grid.Column="2" Text="{Binding InReviewColumn.Count}" FontSize="11"
+                                   TextColor="{StaticResource CardSubText}" />
+                        </Grid>
+                        <ScrollView Grid.Row="1">
+                            <CollectionView ItemsSource="{Binding InReviewColumn}"
+                                            ItemTemplate="{StaticResource TaskCardTemplate}"
+                                            SelectionMode="None">
+                                <CollectionView.EmptyView>
+                                    <Label Text="(boş — sürükleyip bırakabilirsin)" FontSize="11"
+                                           TextColor="{StaticResource CardSubText}"
+                                           HorizontalOptions="Center" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </ScrollView>
+                        <Button Grid.Row="2" Text="+ Görev Ekle" FontSize="11"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}"
+                                Command="{Binding NewTaskInStatusCommand}" CommandParameter="InReview" />
+                    </Grid>
+                </Border>
+
+                <!-- DONE -->
+                <Border WidthRequest="280" StrokeShape="RoundRectangle 8" Padding="10"
+                        Stroke="#D1D5DB" StrokeThickness="1" BackgroundColor="#E8F5E9">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True"
+                            DropCommand="{Binding DropCommand}"
+                            DropCommandParameter="Done" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <BoxView Grid.Column="0" WidthRequest="10" HeightRequest="10" Color="#4CAF50" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Done" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource ColumnText}" Margin="6,0,0,0" />
+                            <Label Grid.Column="2" Text="{Binding DoneColumn.Count}" FontSize="11"
+                                   TextColor="{StaticResource CardSubText}" />
+                        </Grid>
+                        <ScrollView Grid.Row="1">
+                            <CollectionView ItemsSource="{Binding DoneColumn}"
+                                            ItemTemplate="{StaticResource TaskCardTemplate}"
+                                            SelectionMode="None">
+                                <CollectionView.EmptyView>
+                                    <Label Text="(boş — sürükleyip bırakabilirsin)" FontSize="11"
+                                           TextColor="{StaticResource CardSubText}"
+                                           HorizontalOptions="Center" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </ScrollView>
+                        <Button Grid.Row="2" Text="+ Görev Ekle" FontSize="11"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}"
+                                Command="{Binding NewTaskInStatusCommand}" CommandParameter="Done" />
+                    </Grid>
+                </Border>
+
+                <!-- BLOCKED -->
+                <Border WidthRequest="280" StrokeShape="RoundRectangle 8" Padding="10"
+                        Stroke="#D1D5DB" StrokeThickness="1" BackgroundColor="#FFEBEE">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True"
+                            DropCommand="{Binding DropCommand}"
+                            DropCommandParameter="Blocked" />
+                    </Border.GestureRecognizers>
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                            <BoxView Grid.Column="0" WidthRequest="10" HeightRequest="10" Color="#F44336" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Blocked" FontAttributes="Bold" FontSize="13"
+                                   TextColor="{StaticResource ColumnText}" Margin="6,0,0,0" />
+                            <Label Grid.Column="2" Text="{Binding BlockedColumn.Count}" FontSize="11"
+                                   TextColor="{StaticResource CardSubText}" />
+                        </Grid>
+                        <ScrollView Grid.Row="1">
+                            <CollectionView ItemsSource="{Binding BlockedColumn}"
+                                            ItemTemplate="{StaticResource TaskCardTemplate}"
+                                            SelectionMode="None">
+                                <CollectionView.EmptyView>
+                                    <Label Text="(boş — sürükleyip bırakabilirsin)" FontSize="11"
+                                           TextColor="{StaticResource CardSubText}"
+                                           HorizontalOptions="Center" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </ScrollView>
+                        <Button Grid.Row="2" Text="+ Görev Ekle" FontSize="11"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}"
+                                Command="{Binding NewTaskInStatusCommand}" CommandParameter="Blocked" />
+                    </Grid>
+                </Border>
+
+            </HorizontalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

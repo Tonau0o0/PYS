@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PYS.API/PYS.API.csproj" />
+    <Project Path="src/PYS.Client/PYS.Client.csproj" />
+    <Project Path="src/PYS.Core/PYS.Core.csproj" />
+    <Project Path="src/PYS.Data/PYS.Data.csproj" />
+    <Project Path="src/PYS.Service/PYS.Service.csproj" />
+  </Folder>
+</Solution>

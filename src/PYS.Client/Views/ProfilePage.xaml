@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             x:Class="PYS.Client.Views.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Profil">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16" MaximumWidthRequest="560" HorizontalOptions="Center">
+
+            <HorizontalStackLayout Spacing="16" VerticalOptions="Center">
+                <Border WidthRequest="64" HeightRequest="64"
+                        StrokeShape="RoundRectangle 32"
+                        Stroke="Transparent"
+                        BackgroundColor="{Binding CurrentColor, Converter={StaticResource StringToColorConverter}}">
+                    <Label Text="{Binding DisplayName, Converter={StaticResource InitialsConverter}}"
+                           TextColor="White" FontSize="24" FontAttributes="Bold"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="{Binding DisplayName}" FontSize="18" FontAttributes="Bold" />
+                    <Label FontSize="12" TextColor="Gray">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="@" />
+                                <Span Text="{Binding UserName}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <Label Text="Renk Seç" FontSize="16" FontAttributes="Bold" Margin="0,16,0,0" />
+            <Label Text="Sana atanan görevler bu renkle gösterilecek."
+                   FontSize="12" TextColor="Gray" />
+
+            <CollectionView ItemsSource="{Binding Palette}" SelectionMode="None">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="6" HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Border WidthRequest="56" HeightRequest="56"
+                                StrokeShape="RoundRectangle 28"
+                                Stroke="LightGray" StrokeThickness="2"
+                                BackgroundColor="{Binding ., Converter={StaticResource StringToColorConverter}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileViewModel}}, Path=SelectCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+            <Label Text="{Binding SuccessMessage}" TextColor="Green" FontSize="12"
+                   IsVisible="{Binding SuccessMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Button Text="← Geri" Command="{Binding BackCommand}"
+                    BackgroundColor="LightGray" TextColor="Black" Margin="0,16,0,0" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

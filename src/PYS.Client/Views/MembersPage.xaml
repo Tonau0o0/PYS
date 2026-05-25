@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             xmlns:models="clr-namespace:PYS.Client.Models"
+             x:Class="PYS.Client.Views.MembersPage"
+             x:DataType="vm:MembersViewModel"
+             Title="Üyeler">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12" MaximumWidthRequest="720" HorizontalOptions="Center">
+
+            <Label Text="{Binding ProjectName}" FontSize="22" FontAttributes="Bold" />
+
+            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Padding="12"
+                    IsVisible="{Binding IsOwner}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="E-posta ile takım arkadaşı davet et" FontAttributes="Bold" />
+                    <Label Text="(Kayıtlıysa anında üye olur, değilse kayıt olduğunda otomatik katılır.)"
+                           FontSize="11" TextColor="Gray" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Entry Grid.Column="0" Text="{Binding InviteEmail}"
+                               Placeholder="ad@domain.com" Keyboard="Email" />
+                        <Button Grid.Column="1" Text="Davet Et"
+                                Command="{Binding InviteCommand}"
+                                BackgroundColor="{StaticResource Primary}" TextColor="White"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
+                    <Label Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+                    <Label Text="{Binding SuccessMessage}" TextColor="Green" FontSize="12"
+                           IsVisible="{Binding SuccessMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Üyeler" FontSize="16" FontAttributes="Bold" Margin="0,12,0,0" />
+
+            <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding LoadCommand}">
+                <CollectionView ItemsSource="{Binding Members}" SelectionMode="None"
+                                EmptyView="Henüz üye yok.">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProjectMemberItem">
+                            <Border Stroke="LightGray" StrokeThickness="1" StrokeShape="RoundRectangle 6"
+                                    Padding="12" Margin="0,4">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border Grid.Column="0" WidthRequest="36" HeightRequest="36"
+                                            StrokeShape="RoundRectangle 18" Stroke="Transparent"
+                                            BackgroundColor="{Binding Color, Converter={StaticResource StringToColorConverter}}"
+                                            VerticalOptions="Center">
+                                        <Label Text="{Binding FullName, Converter={StaticResource InitialsConverter}}"
+                                               TextColor="White" FontSize="13" FontAttributes="Bold"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                        <Label Text="{Binding FullName}" FontSize="14" FontAttributes="Bold" />
+                                        <Label FontSize="11" TextColor="DarkSlateGray">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="@" />
+                                                    <Span Text="{Binding UserName}" />
+                                                    <Span Text="   " />
+                                                    <Span Text="{Binding Email}" />
+                                                    <Span Text="   Rol: " />
+                                                    <Span Text="{Binding Role}" FontAttributes="Bold" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="2" Text="Çıkar"
+                                            FontSize="11" Padding="8,4"
+                                            BackgroundColor="IndianRed" TextColor="White"
+                                            VerticalOptions="Center"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:MembersViewModel}}, Path=IsOwner}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MembersViewModel}}, Path=RemoveMemberCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+
+            <Label Text="Bekleyen Davetler" FontSize="16" FontAttributes="Bold" Margin="0,12,0,0"
+                   IsVisible="{Binding IsOwner}" />
+
+            <CollectionView ItemsSource="{Binding Invitations}" SelectionMode="None"
+                            IsVisible="{Binding IsOwner}"
+                            EmptyView="Bekleyen davet yok.">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:InvitationItem">
+                        <Border Stroke="Orange" StrokeThickness="1" StrokeShape="RoundRectangle 6"
+                                Padding="12" Margin="0,4">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0">
+                                    <Label Text="{Binding Email}" FontAttributes="Bold" />
+                                    <Label FontSize="11" TextColor="Gray">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="Davet eden: " />
+                                                <Span Text="{Binding CreatedBy}" />
+                                                <Span Text="    Tarih: " />
+                                                <Span Text="{Binding CreatedAt, StringFormat='{0:dd.MM.yyyy}'}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <Button Grid.Column="1" Text="İptal" FontSize="11" Padding="8,4"
+                                        BackgroundColor="LightSlateGray" TextColor="White"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MembersViewModel}}, Path=CancelInvitationCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Text="← Geri" Command="{Binding BackCommand}" Margin="0,12,0,0"
+                    BackgroundColor="LightGray" TextColor="Black" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
