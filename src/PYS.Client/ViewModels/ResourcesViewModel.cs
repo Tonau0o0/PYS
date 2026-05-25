@@ -9,18 +9,29 @@ using PYS.Client.Services;
 namespace PYS.Client.ViewModels;
 
 /// <summary>
-/// Görevler ekranının alt panelindeki "Proje Kaynakları" (dosyalar + YouTube videoları).
-/// TasksViewModel bunu bir alt-VM olarak barındırır (SRP).
+/// Görevler ekranının alt panelindeki "Proje Kaynakları" — klasörlü dosya sistemi + YouTube.
+/// İç içe klasör navigasyonu, sürükle-bırak ile taşıma ve göreve bağlama için sürüklenen
+/// kaynağın paylaşımını sağlar.
 /// </summary>
 public sealed partial class ResourcesViewModel : BaseViewModel
 {
     private readonly PysApi _api;
     private readonly HttpClient _http;
 
+    // Bulunduğumuz klasör yolu (boş = kök).
+    private readonly List<(int Id, string Name)> _trail = new();
+
     public ObservableCollection<ProjectResourceItem> Resources { get; } = new();
 
     [ObservableProperty]
     private int _projectId;
+
+    /// <summary>Şu an sürüklenen kaynak (klasöre taşıma veya göreve bağlama için).</summary>
+    public ProjectResourceItem? DraggedResource { get; private set; }
+
+    public int? CurrentFolderId => _trail.Count > 0 ? _trail[^1].Id : null;
+    public bool IsInSubfolder => _trail.Count > 0;
+    public string CurrentPathText => _trail.Count == 0 ? "Kök" : "Kök / " + string.Join(" / ", _trail.Select(t => t.Name));
 
     public ResourcesViewModel(PysApi api, HttpClient http)
     {
@@ -33,7 +44,7 @@ public sealed partial class ResourcesViewModel : BaseViewModel
         if (ProjectId == 0) return;
         try
         {
-            var data = await _api.GetResourcesAsync(ProjectId);
+            var data = await _api.GetResourcesAsync(ProjectId, CurrentFolderId);
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 Resources.Clear();
@@ -41,6 +52,29 @@ public sealed partial class ResourcesViewModel : BaseViewModel
             });
         }
         catch (Exception ex) { HandleException(ex); }
+    }
+
+    private void NotifyPath()
+    {
+        OnPropertyChanged(nameof(CurrentFolderId));
+        OnPropertyChanged(nameof(IsInSubfolder));
+        OnPropertyChanged(nameof(CurrentPathText));
+    }
+
+    [RelayCommand]
+    private async Task NewFolderAsync()
+    {
+        try
+        {
+            var name = await Shell.Current.DisplayPromptAsync("Yeni Klasör", "Klasör adı:", "Oluştur", "İptal");
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            IsBusy = true;
+            await _api.CreateFolderAsync(ProjectId, name.Trim(), CurrentFolderId);
+            await LoadAsync();
+        }
+        catch (Exception ex) { HandleException(ex); }
+        finally { IsBusy = false; }
     }
 
     [RelayCommand]
@@ -52,14 +86,14 @@ public sealed partial class ResourcesViewModel : BaseViewModel
             if (file is null) return;
 
             var title = await Shell.Current.DisplayPromptAsync(
-                "Başlık", "Bu dosya için bir başlık gir (boş bırakırsan dosya adı kullanılır):",
-                "Ekle", "İptal", initialValue: Path.GetFileNameWithoutExtension(file.FileName));
-            if (title is null) return; // İptal
+                "Başlık", "Dosya başlığı (boş = dosya adı):", "Ekle", "İptal",
+                initialValue: Path.GetFileNameWithoutExtension(file.FileName));
+            if (title is null) return;
 
             IsBusy = true;
             await using var stream = await file.OpenReadAsync();
             await _api.UploadResourceAsync(ProjectId, stream, file.FileName,
-                string.IsNullOrWhiteSpace(title) ? file.FileName : title.Trim());
+                string.IsNullOrWhiteSpace(title) ? file.FileName : title.Trim(), CurrentFolderId);
             await LoadAsync();
         }
         catch (Exception ex) { HandleException(ex); }
@@ -81,7 +115,8 @@ public sealed partial class ResourcesViewModel : BaseViewModel
             if (title is null) return;
 
             IsBusy = true;
-            await _api.AddYouTubeAsync(ProjectId, string.IsNullOrWhiteSpace(title) ? "YouTube Videosu" : title.Trim(), url.Trim());
+            await _api.AddYouTubeAsync(ProjectId,
+                string.IsNullOrWhiteSpace(title) ? "YouTube Videosu" : title.Trim(), url.Trim(), CurrentFolderId);
             await LoadAsync();
         }
         catch (Exception ex) { HandleException(ex); }
@@ -93,6 +128,14 @@ public sealed partial class ResourcesViewModel : BaseViewModel
     {
         if (item is null) return;
 
+        if (item.IsFolder)
+        {
+            _trail.Add((item.Id, item.Title));
+            NotifyPath();
+            await LoadAsync();
+            return;
+        }
+
         if (item.IsYouTube && !string.IsNullOrEmpty(item.YouTubeId))
         {
             await Shell.Current.GoToAsync($"video-player?videoId={item.YouTubeId}");
@@ -100,6 +143,36 @@ public sealed partial class ResourcesViewModel : BaseViewModel
         }
 
         await DownloadFileAsync(item);
+    }
+
+    [RelayCommand]
+    private async Task GoUpAsync()
+    {
+        if (_trail.Count == 0) return;
+        _trail.RemoveAt(_trail.Count - 1);
+        NotifyPath();
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private void DragStarting(ProjectResourceItem item) => DraggedResource = item;
+
+    /// <summary>Bir kaynağı bir klasör kartının üzerine bırakınca o klasöre taşır.</summary>
+    [RelayCommand]
+    private async Task DropOnFolderAsync(ProjectResourceItem folder)
+    {
+        var dragged = DraggedResource;
+        DraggedResource = null;
+        if (dragged is null || folder is null || !folder.IsFolder || dragged.Id == folder.Id) return;
+
+        try
+        {
+            IsBusy = true;
+            await _api.MoveResourceAsync(ProjectId, dragged.Id, folder.Id);
+            await LoadAsync();
+        }
+        catch (Exception ex) { HandleException(ex); }
+        finally { IsBusy = false; }
     }
 
     private async Task DownloadFileAsync(ProjectResourceItem item)
@@ -126,8 +199,10 @@ public sealed partial class ResourcesViewModel : BaseViewModel
     private async Task DeleteResourceAsync(ProjectResourceItem item)
     {
         if (item is null) return;
-        var confirm = await Shell.Current.DisplayAlertAsync("Sil",
-            $"'{item.Title}' kaynağını silmek istiyor musunuz?", "Evet", "Hayır");
+        var msg = item.IsFolder
+            ? $"'{item.Title}' klasörünü ve içindeki her şeyi silmek istiyor musunuz?"
+            : $"'{item.Title}' kaynağını silmek istiyor musunuz?";
+        var confirm = await Shell.Current.DisplayAlertAsync("Sil", msg, "Evet", "Hayır");
         if (!confirm) return;
 
         try

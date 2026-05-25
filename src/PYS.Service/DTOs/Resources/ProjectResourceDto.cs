@@ -6,6 +6,7 @@ namespace PYS.Service.DTOs.Resources;
 public sealed record ProjectResourceDto(
     int Id,
     int ProjectId,
+    int? ParentFolderId,
     ResourceType Type,
     string Title,
     string? Url,
@@ -23,4 +24,19 @@ public sealed class AddYouTubeDto
 
     [Required, MaxLength(512), Url]
     public string Url { get; set; } = string.Empty;
+
+    public int? ParentFolderId { get; set; }
+}
+
+public sealed class CreateFolderDto
+{
+    [Required, MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+
+    public int? ParentFolderId { get; set; }
+}
+
+public sealed class MoveResourceDto
+{
+    public int? ParentFolderId { get; set; }
 }

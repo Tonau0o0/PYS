@@ -82,6 +82,22 @@ public sealed partial class TasksViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Panelden sürüklenen bir kaynağı bu görev kartına bırakınca göreve bağlar.</summary>
+    [RelayCommand]
+    private async Task DropResourceOnTaskAsync(TaskItem task)
+    {
+        var dragged = Resources.DraggedResource;
+        if (dragged is null || task is null) return;   // sürüklenen bir kaynak değilse (ör. görev) yok say
+
+        try
+        {
+            await _api.LinkResourceToTaskAsync(task.Id, dragged.Id);
+            await Shell.Current.DisplayAlertAsync("Eklendi",
+                $"'{dragged.Title}' kaynağı '{task.Title}' görevine bağlandı.", "Tamam");
+        }
+        catch (Exception ex) { HandleException(ex); }
+    }
+
     [RelayCommand]
     public async Task LoadAsync()
     {

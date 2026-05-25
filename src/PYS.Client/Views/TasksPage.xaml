@@ -22,6 +22,9 @@
                     <DragGestureRecognizer CanDrag="True"
                         DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=DragStartedCommand}"
                         DragStartingCommandParameter="{Binding .}" />
+                    <DropGestureRecognizer AllowDrop="True"
+                        DropCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:TasksViewModel}}, Path=DropResourceOnTaskCommand}"
+                        DropCommandParameter="{Binding .}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="6,*">
                     <BoxView Grid.Column="0"
@@ -261,15 +264,23 @@
                 Stroke="#D1D5DB" StrokeThickness="1" Padding="10" BackgroundColor="#FAFAFA"
                 BindingContext="{Binding Resources}" x:DataType="vm:ResourcesViewModel">
             <Grid RowDefinitions="Auto,*" RowSpacing="6">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-                    <Label Grid.Column="0" Text="📂 Proje Kaynakları" FontAttributes="Bold" FontSize="14"
-                           TextColor="{StaticResource ColumnText}" VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="+ Dosya" FontSize="11" Padding="10,4"
-                            BackgroundColor="{StaticResource Primary}" TextColor="White"
-                            Command="{Binding AddFileCommand}" />
-                    <Button Grid.Column="2" Text="+ YouTube" FontSize="11" Padding="10,4"
-                            BackgroundColor="#FF0000" TextColor="White"
-                            Command="{Binding AddYouTubeCommand}" />
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <HorizontalStackLayout Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                        <Button Text="⬆" FontSize="13" Padding="8,2" BackgroundColor="LightGray" TextColor="Black"
+                                IsVisible="{Binding IsInSubfolder}" Command="{Binding GoUpCommand}" />
+                        <Label Text="📂" FontSize="14" VerticalOptions="Center" />
+                        <Label Text="{Binding CurrentPathText}" FontAttributes="Bold" FontSize="13"
+                               TextColor="{StaticResource ColumnText}" VerticalOptions="Center"
+                               LineBreakMode="HeadTruncation" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                        <Button Text="+ Klasör" FontSize="11" Padding="8,4"
+                                BackgroundColor="#F59E0B" TextColor="White" Command="{Binding NewFolderCommand}" />
+                        <Button Text="+ Dosya" FontSize="11" Padding="8,4"
+                                BackgroundColor="{StaticResource Primary}" TextColor="White" Command="{Binding AddFileCommand}" />
+                        <Button Text="+ YouTube" FontSize="11" Padding="8,4"
+                                BackgroundColor="#FF0000" TextColor="White" Command="{Binding AddYouTubeCommand}" />
+                    </HorizontalStackLayout>
                 </Grid>
 
                 <CollectionView Grid.Row="1" ItemsSource="{Binding Resources}">
@@ -290,14 +301,21 @@
                                         <TapGestureRecognizer
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ResourcesViewModel}}, Path=OpenResourceCommand}"
                                             CommandParameter="{Binding .}" />
+                                        <DragGestureRecognizer CanDrag="True"
+                                            DragStartingCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:ResourcesViewModel}}, Path=DragStartingCommand}"
+                                            DragStartingCommandParameter="{Binding .}" />
+                                        <DropGestureRecognizer AllowDrop="True"
+                                            DropCommand="{Binding Source={RelativeSource AncestorType={x:Type vm:ResourcesViewModel}}, Path=DropOnFolderCommand}"
+                                            DropCommandParameter="{Binding .}" />
                                     </Grid.GestureRecognizers>
 
                                     <!-- Önizleme -->
                                     <Grid Grid.Row="0" BackgroundColor="#111827">
                                         <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill"
                                                IsVisible="{Binding IsYouTube}" />
-                                        <Label Text="📄" FontSize="40" HorizontalOptions="Center" VerticalOptions="Center"
-                                               IsVisible="{Binding IsFile}" />
+                                        <Label Text="{Binding Glyph}" FontSize="40" TextColor="White"
+                                               HorizontalOptions="Center" VerticalOptions="Center"
+                                               IsVisible="{Binding IsYouTube, Converter={StaticResource InvertedBoolConverter}}" />
                                         <Label Text="▶" FontSize="30" TextColor="White" FontAttributes="Bold"
                                                HorizontalOptions="Center" VerticalOptions="Center"
                                                IsVisible="{Binding IsYouTube}" />

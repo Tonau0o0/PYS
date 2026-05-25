@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             xmlns:models="clr-namespace:PYS.Client.Models"
              x:Class="PYS.Client.Views.TaskEditPage"
              x:DataType="vm:TaskEditViewModel"
              Title="{Binding PageTitle}">
@@ -41,6 +42,36 @@
 
             <Label Text="{Binding ErrorMessage}" TextColor="Red" FontSize="12"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <!-- Göreve bağlı kaynaklar (tüm ekip üyelerince görülür) -->
+            <VerticalStackLayout IsVisible="{Binding IsExistingTask}" Spacing="6" Margin="0,12,0,0">
+                <Label Text="📎 Bağlı Dosyalar / Kaynaklar" FontSize="15" FontAttributes="Bold" />
+                <Label Text="Kanban'da bir kaynağı bu görevin kartının üzerine sürükleyerek ekleyebilirsin."
+                       FontSize="11" TextColor="Gray" />
+                <CollectionView ItemsSource="{Binding LinkedResources}" SelectionMode="None">
+                    <CollectionView.EmptyView>
+                        <Label Text="Henüz bağlı kaynak yok." FontSize="11" TextColor="Gray" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProjectResourceItem">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" Padding="4" ColumnSpacing="8">
+                                <Label Grid.Column="0" Text="{Binding Glyph}" FontSize="18" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                    <Label Text="{Binding Title}" FontSize="13" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding MetaText}" FontSize="10" TextColor="Gray" />
+                                </VerticalStackLayout>
+                                <Button Grid.Column="2" Text="Aç" FontSize="11" Padding="10,2" VerticalOptions="Center"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskEditViewModel}}, Path=OpenLinkedResourceCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Grid.Column="3" Text="✕" FontSize="11" Padding="8,2" VerticalOptions="Center"
+                                        BackgroundColor="IndianRed" TextColor="White"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskEditViewModel}}, Path=RemoveLinkedResourceCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,16,0,0">
                 <Button Grid.Column="0" Text="İptal" Command="{Binding CancelCommand}"

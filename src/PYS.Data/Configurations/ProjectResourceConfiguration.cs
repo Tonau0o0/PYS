@@ -19,7 +19,14 @@ public sealed class ProjectResourceConfiguration : IEntityTypeConfiguration<Proj
             .HasForeignKey(r => r.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Klasör hiyerarşisi (self-reference). SQL Server self-ref cascade'e izin vermez → Restrict.
+        builder.HasOne(r => r.ParentFolder)
+            .WithMany(r => r.Children)
+            .HasForeignKey(r => r.ParentFolderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(r => r.ProjectId);
+        builder.HasIndex(r => r.ParentFolderId);
 
         builder.HasQueryFilter(r => !r.IsDeleted);
     }

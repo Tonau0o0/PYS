@@ -12,6 +12,14 @@ public class ProjectResource : BaseEntity
     public int ProjectId { get; set; }
     public Project? Project { get; set; }
 
+    /// <summary>İçinde bulunduğu klasör (null = kök). Klasörler de ProjectResource'tur (Type=Folder).</summary>
+    public int? ParentFolderId { get; set; }
+    public ProjectResource? ParentFolder { get; set; }
+    public ICollection<ProjectResource> Children { get; set; } = new List<ProjectResource>();
+
+    /// <summary>Bu kaynağın bağlı olduğu görevler (çok-çok).</summary>
+    public ICollection<TaskResource> TaskLinks { get; set; } = new List<TaskResource>();
+
     public ResourceType Type { get; set; }
 
     [Required, MaxLength(200)]

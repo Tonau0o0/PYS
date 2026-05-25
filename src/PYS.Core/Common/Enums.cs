@@ -50,5 +50,6 @@ public enum InvitationStatus
 public enum ResourceType
 {
     File = 0,
-    YouTube = 1
+    YouTube = 1,
+    Folder = 2
 }

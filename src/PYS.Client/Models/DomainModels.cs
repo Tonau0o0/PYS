@@ -60,6 +60,7 @@ public sealed record TaskItem(
 public sealed record ProjectResourceItem(
     int Id,
     int ProjectId,
+    int? ParentFolderId,
     ResourceType Type,
     string Title,
     string? Url,
@@ -72,14 +73,25 @@ public sealed record ProjectResourceItem(
 {
     public bool IsYouTube => Type == ResourceType.YouTube;
     public bool IsFile => Type == ResourceType.File;
+    public bool IsFolder => Type == ResourceType.Folder;
 
     public string? ThumbnailUrl => IsYouTube && !string.IsNullOrEmpty(YouTubeId)
         ? $"https://img.youtube.com/vi/{YouTubeId}/mqdefault.jpg"
         : null;
 
-    public string MetaText => IsYouTube
-        ? "▶ YouTube"
-        : $"📄 {FormatSize(SizeBytes)}";
+    public string Glyph => Type switch
+    {
+        ResourceType.Folder => "📁",
+        ResourceType.YouTube => "▶",
+        _ => "📄"
+    };
+
+    public string MetaText => Type switch
+    {
+        ResourceType.Folder => "Klasör",
+        ResourceType.YouTube => "YouTube",
+        _ => FormatSize(SizeBytes)
+    };
 
     private static string FormatSize(long? bytes)
     {
@@ -90,7 +102,9 @@ public sealed record ProjectResourceItem(
     }
 }
 
-public sealed record AddYouTubeRequest(string Title, string Url);
+public sealed record AddYouTubeRequest(string Title, string Url, int? ParentFolderId);
+public sealed record CreateFolderRequest(string Name, int? ParentFolderId);
+public sealed record MoveResourceRequest(int? ParentFolderId);
 
 public sealed record CreateProjectRequest(string Name, string? Description, ProjectStatus Status, DateTime StartDate, DateTime? EndDate);
 public sealed record UpdateProjectRequest(string Name, string? Description, ProjectStatus Status, DateTime StartDate, DateTime? EndDate);

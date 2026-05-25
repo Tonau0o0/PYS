@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.ApplicationModel;
 using PYS.Client.Models;
 using PYS.Client.Services;
 using PYS.Core.Common;
@@ -14,11 +15,21 @@ namespace PYS.Client.ViewModels;
 public sealed partial class TaskEditViewModel : BaseViewModel
 {
     private readonly PysApi _api;
+    private readonly HttpClient _http;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _membersLoaded;
     private bool _taskLoaded;
 
-    public TaskEditViewModel(PysApi api) => _api = api;
+    /// <summary>Bu göreve bağlı proje kaynakları (tüm üyelerce görülür).</summary>
+    public ObservableCollection<ProjectResourceItem> LinkedResources { get; } = new();
+
+    public bool IsExistingTask => TaskId is not null;
+
+    public TaskEditViewModel(PysApi api, HttpClient http)
+    {
+        _api = api;
+        _http = http;
+    }
 
     [ObservableProperty]
     private int? _taskId;
@@ -73,6 +84,7 @@ public sealed partial class TaskEditViewModel : BaseViewModel
     partial void OnTaskIdChanged(int? value)
     {
         OnPropertyChanged(nameof(PageTitle));
+        OnPropertyChanged(nameof(IsExistingTask));
         _taskLoaded = false;
         FireAndForget(LoadAsync);
     }
@@ -142,9 +154,61 @@ public sealed partial class TaskEditViewModel : BaseViewModel
                     _taskLoaded = true;
                 }
             });
+
+            // Göreve bağlı kaynakları her yüklemede tazele (drag ile eklenmiş olabilir).
+            if (TaskId is not null)
+            {
+                var linked = await _api.GetTaskResourcesAsync(TaskId.Value);
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    LinkedResources.Clear();
+                    foreach (var r in linked) LinkedResources.Add(r);
+                });
+            }
         }
         catch (Exception ex) { HandleException(ex); }
         finally { IsBusy = false; _gate.Release(); }
+    }
+
+    [RelayCommand]
+    private async Task OpenLinkedResourceAsync(ProjectResourceItem item)
+    {
+        if (item is null) return;
+
+        if (item.IsYouTube && !string.IsNullOrEmpty(item.YouTubeId))
+        {
+            await Shell.Current.GoToAsync($"video-player?videoId={item.YouTubeId}");
+            return;
+        }
+
+        if (!item.IsFile || string.IsNullOrEmpty(item.Url)) return;
+
+        try
+        {
+            IsBusy = true;
+            var bytes = await _http.GetByteArrayAsync($"{MauiProgram.ApiBaseUrl}{item.Url}");
+            var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            Directory.CreateDirectory(downloads);
+            var target = Path.Combine(downloads, item.FileName ?? $"resource_{item.Id}");
+            await File.WriteAllBytesAsync(target, bytes);
+
+            var open = await Shell.Current.DisplayAlertAsync("İndirildi", target, "Aç", "Tamam");
+            if (open) await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(target) });
+        }
+        catch (Exception ex) { HandleException(ex); }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task RemoveLinkedResourceAsync(ProjectResourceItem item)
+    {
+        if (item is null || TaskId is null) return;
+        try
+        {
+            await _api.UnlinkResourceFromTaskAsync(TaskId.Value, item.Id);
+            await MainThread.InvokeOnMainThreadAsync(() => LinkedResources.Remove(item));
+        }
+        catch (Exception ex) { HandleException(ex); }
     }
 
     [RelayCommand]

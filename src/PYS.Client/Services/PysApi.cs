@@ -75,17 +75,37 @@ public sealed class PysApi
     public Task DeleteTaskAsync(int id, CancellationToken ct = default)
         => _api.DeleteAsync($"/api/tasks/{id}", ct);
 
-    // Project Resources
-    public Task<ProjectResourceItem[]> GetResourcesAsync(int projectId, CancellationToken ct = default)
-        => _api.GetAsync<ProjectResourceItem[]>($"/api/projects/{projectId}/resources", ct);
+    // Project Resources (dosya sistemi)
+    public Task<ProjectResourceItem[]> GetResourcesAsync(int projectId, int? folderId = null, CancellationToken ct = default)
+        => _api.GetAsync<ProjectResourceItem[]>(
+            folderId.HasValue ? $"/api/projects/{projectId}/resources?folderId={folderId}" : $"/api/projects/{projectId}/resources", ct);
 
-    public Task<ProjectResourceItem> AddYouTubeAsync(int projectId, string title, string url, CancellationToken ct = default)
-        => _api.PostAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/link", new AddYouTubeRequest(title, url), ct);
+    public Task<ProjectResourceItem> CreateFolderAsync(int projectId, string name, int? parentFolderId, CancellationToken ct = default)
+        => _api.PostAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/folder", new CreateFolderRequest(name, parentFolderId), ct);
 
-    public Task<ProjectResourceItem> UploadResourceAsync(int projectId, Stream content, string fileName, string title, CancellationToken ct = default)
-        => _api.PostFileAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/file", content, fileName,
-            new Dictionary<string, string> { ["title"] = title }, ct: ct);
+    public Task<ProjectResourceItem> AddYouTubeAsync(int projectId, string title, string url, int? parentFolderId, CancellationToken ct = default)
+        => _api.PostAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/link", new AddYouTubeRequest(title, url, parentFolderId), ct);
+
+    public Task<ProjectResourceItem> UploadResourceAsync(int projectId, Stream content, string fileName, string title, int? parentFolderId, CancellationToken ct = default)
+    {
+        var fields = new Dictionary<string, string> { ["title"] = title };
+        if (parentFolderId.HasValue) fields["parentFolderId"] = parentFolderId.Value.ToString();
+        return _api.PostFileAsync<ProjectResourceItem>($"/api/projects/{projectId}/resources/file", content, fileName, fields, ct: ct);
+    }
+
+    public Task MoveResourceAsync(int projectId, int resourceId, int? parentFolderId, CancellationToken ct = default)
+        => _api.PutAsync($"/api/projects/{projectId}/resources/{resourceId}/move", new MoveResourceRequest(parentFolderId), ct);
 
     public Task DeleteResourceAsync(int projectId, int resourceId, CancellationToken ct = default)
         => _api.DeleteAsync($"/api/projects/{projectId}/resources/{resourceId}", ct);
+
+    // Görev ↔ kaynak bağları
+    public Task<ProjectResourceItem[]> GetTaskResourcesAsync(int taskId, CancellationToken ct = default)
+        => _api.GetAsync<ProjectResourceItem[]>($"/api/tasks/{taskId}/resources", ct);
+
+    public Task LinkResourceToTaskAsync(int taskId, int resourceId, CancellationToken ct = default)
+        => _api.PostAsync($"/api/tasks/{taskId}/resources/{resourceId}", new { }, ct);
+
+    public Task UnlinkResourceFromTaskAsync(int taskId, int resourceId, CancellationToken ct = default)
+        => _api.DeleteAsync($"/api/tasks/{taskId}/resources/{resourceId}", ct);
 }
