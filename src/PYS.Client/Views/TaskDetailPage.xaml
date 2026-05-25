@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PYS.Client.ViewModels"
+             xmlns:models="clr-namespace:PYS.Client.Models"
+             x:Class="PYS.Client.Views.TaskDetailPage"
+             x:DataType="vm:TaskDetailViewModel"
+             Title="Görev Detayı">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="✏ Düzenle" Command="{Binding EditCommand}" />
+        <ToolbarItem Text="🗑 Sil" Command="{Binding DeleteCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid ColumnDefinitions="*,300" Padding="12" ColumnSpacing="12">
+
+        <!-- SOL: bilgi + yorumlar -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+
+            <!-- Bilgi kartı -->
+            <Border Grid.Row="0" StrokeShape="RoundRectangle 10" Stroke="#D1D5DB" StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding Task.Title}" FontSize="22" FontAttributes="Bold" />
+
+                    <HorizontalStackLayout Spacing="8">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#EEF2FF" Padding="8,3">
+                            <Label FontSize="12" TextColor="#3730A3">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="Durum: " />
+                                        <Span Text="{Binding Task.Status}" FontAttributes="Bold" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                        </Border>
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#FEF3C7" Padding="8,3">
+                            <Label FontSize="12" TextColor="#92400E">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="Öncelik: " />
+                                        <Span Text="{Binding Task.Priority}" FontAttributes="Bold" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                        </Border>
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#ECFDF5" Padding="8,3">
+                            <Label FontSize="12" TextColor="#065F46"
+                                   Text="{Binding Task.DueDate, StringFormat='📅 {0:dd.MM.yyyy}'}" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <!-- Atanan -->
+                    <HorizontalStackLayout Spacing="8" Margin="0,4,0,0">
+                        <Border WidthRequest="36" HeightRequest="36" StrokeShape="RoundRectangle 18" Stroke="Transparent"
+                                BackgroundColor="{Binding AssigneeColor, Converter={StaticResource StringToColorConverter}}">
+                            <Grid>
+                                <Label Text="{Binding AssigneeName, Converter={StaticResource InitialsConverter}}"
+                                       TextColor="White" FontSize="14" FontAttributes="Bold"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Image Source="{Binding AssigneeAvatarUrl, Converter={StaticResource ApiUrlConverter}}"
+                                       Aspect="AspectFill" IsVisible="{Binding HasAssigneeAvatar}" />
+                            </Grid>
+                        </Border>
+                        <Label Text="{Binding AssigneeName}" VerticalOptions="Center" FontSize="14" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Açıklama" FontSize="13" FontAttributes="Bold" Margin="0,6,0,0" />
+                    <Label Text="{Binding Task.Description}" FontSize="14" TextColor="#374151" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Yorumlar listesi -->
+            <Border Grid.Row="1" StrokeShape="RoundRectangle 10" Stroke="#D1D5DB" StrokeThickness="1" Padding="12">
+                <Grid RowDefinitions="Auto,*">
+                    <Label Grid.Row="0" Text="💬 Yorumlar" FontSize="15" FontAttributes="Bold" Margin="0,0,0,8" />
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding Comments}" SelectionMode="None">
+                        <CollectionView.EmptyView>
+                            <Label Text="Henüz yorum yok. İlk yorumu sen yaz!" FontSize="12" TextColor="Gray" />
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TaskCommentItem">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Padding="0,6">
+                                    <Border Grid.Column="0" WidthRequest="32" HeightRequest="32" VerticalOptions="Start"
+                                            StrokeShape="RoundRectangle 16" Stroke="Transparent"
+                                            BackgroundColor="{Binding AuthorColor, Converter={StaticResource StringToColorConverter}}">
+                                        <Grid>
+                                            <Label Text="{Binding AuthorName, Converter={StaticResource InitialsConverter}}"
+                                                   TextColor="White" FontSize="12" FontAttributes="Bold"
+                                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                                            <Image Source="{Binding AuthorAvatarUrl, Converter={StaticResource ApiUrlConverter}}"
+                                                   Aspect="AspectFill" IsVisible="{Binding HasAvatar}" />
+                                        </Grid>
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1">
+                                        <Label FontSize="12">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding AuthorName}" FontAttributes="Bold" />
+                                                    <Span Text="  " />
+                                                    <Span Text="{Binding TimeText}" FontSize="10" TextColor="Gray" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Text="{Binding Content}" FontSize="13" TextColor="#374151" />
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="2" Text="✕" FontSize="10" Padding="6,2" VerticalOptions="Start"
+                                            BackgroundColor="Transparent" TextColor="Gray"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskDetailViewModel}}, Path=DeleteCommentCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </Border>
+
+            <!-- Yorum ekleme -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Entry Grid.Column="0" Text="{Binding NewComment}" Placeholder="Yorum yaz..."
+                       ReturnCommand="{Binding AddCommentCommand}" />
+                <Button Grid.Column="1" Text="Gönder" Command="{Binding AddCommentCommand}"
+                        BackgroundColor="{StaticResource Primary}" TextColor="White" />
+            </Grid>
+        </Grid>
+
+        <!-- SAĞ: bağlı dosyalar -->
+        <Border Grid.Column="1" StrokeShape="RoundRectangle 10" Stroke="#D1D5DB" StrokeThickness="1" Padding="12">
+            <Grid RowDefinitions="Auto,*">
+                <Label Grid.Row="0" Text="📎 Bağlı Dosyalar" FontSize="15" FontAttributes="Bold" Margin="0,0,0,8" />
+                <CollectionView Grid.Row="1" ItemsSource="{Binding ResourceNodes}" SelectionMode="None">
+                    <CollectionView.EmptyView>
+                        <Label Text="Bu göreve bağlı dosya yok. Kanban'da kartın üzerine sürükleyerek ekleyebilirsin."
+                               FontSize="11" TextColor="Gray" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ResourceNode">
+                            <Border StrokeShape="RoundRectangle 6" Stroke="#E5E7EB" StrokeThickness="1" Padding="8" Margin="{Binding IndentMargin}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskDetailViewModel}}, Path=NodeTapCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Grid.Column="0" Text="{Binding Item.Glyph}" FontSize="18" VerticalOptions="Center" />
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                        <Label Text="{Binding Item.Title}" FontSize="12" FontAttributes="Bold"
+                                               LineBreakMode="TailTruncation" MaxLines="1" />
+                                        <Label Text="{Binding Item.MetaText}" FontSize="10" TextColor="Gray" />
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="2" Text="⬇" FontSize="13" Padding="6,2" VerticalOptions="Center"
+                                            BackgroundColor="{StaticResource Primary}" TextColor="White"
+                                            IsVisible="{Binding Item.IsYouTube, Converter={StaticResource InvertedBoolConverter}}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskDetailViewModel}}, Path=DownloadNodeCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Grid.Column="3" Text="✕" FontSize="11" Padding="6,2" VerticalOptions="Center"
+                                            BackgroundColor="IndianRed" TextColor="White"
+                                            IsVisible="{Binding CanUnlink}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TaskDetailViewModel}}, Path=RemoveNodeCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

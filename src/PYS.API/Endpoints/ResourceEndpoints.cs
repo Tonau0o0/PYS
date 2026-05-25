@@ -51,6 +51,15 @@ public static class ResourceEndpoints
             int projectId, int resourceId, MoveResourceDto dto, IResourceService service, CancellationToken ct) =>
             (await service.MoveAsync(projectId, resourceId, dto.ParentFolderId, ct)).ToHttp());
 
+        group.MapGet("/{resourceId:int}/download", async (
+            int projectId, int resourceId, IResourceService service, CancellationToken ct) =>
+        {
+            var result = await service.GetDownloadAsync(projectId, resourceId, ct);
+            if (!result.IsSuccess || result.Data is null) return result.ToHttp();
+            var fc = result.Data;
+            return Results.File(fc.Stream, fc.ContentType, fc.FileName);
+        });
+
         group.MapDelete("/{resourceId:int}", async (
             int projectId, int resourceId, IResourceService service, CancellationToken ct) =>
             (await service.DeleteAsync(projectId, resourceId, ct)).ToHttp());

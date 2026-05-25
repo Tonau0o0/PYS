@@ -27,4 +27,5 @@ public class ProjectTask : BaseEntity
     public User? Assignee { get; set; }
 
     public ICollection<TaskResource> ResourceLinks { get; set; } = new List<TaskResource>();
+    public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
 }

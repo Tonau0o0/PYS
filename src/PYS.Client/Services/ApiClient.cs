@@ -94,6 +94,15 @@ public sealed class ApiClient
         return await ReadAsync<T>(res, ct);
     }
 
+    /// <summary>Auth header'lı ham bayt indirir (dosya/zip indirme için).</summary>
+    public async Task<byte[]> GetBytesAsync(string path, CancellationToken ct = default)
+    {
+        ApplyAuth();
+        var res = await _http.GetAsync(path, ct);
+        await EnsureSuccessAsync(res, ct);
+        return await res.Content.ReadAsByteArrayAsync(ct);
+    }
+
     private void ApplyAuth()
     {
         var token = _auth.Current?.AccessToken;

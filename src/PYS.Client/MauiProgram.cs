@@ -28,6 +28,10 @@ public static class MauiProgram
         builder.Services.AddSingleton(new HttpClient { BaseAddress = new Uri(ApiBaseUrl) });
         builder.Services.AddSingleton<ApiClient>();
         builder.Services.AddSingleton<PysApi>();
+        builder.Services.AddSingleton<ResourceDownloadService>();
+#if WINDOWS
+        builder.Services.AddSingleton<IFolderPicker, FolderPickerService>();
+#endif
 
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<RegisterViewModel>();
@@ -37,6 +41,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MembersViewModel>();
         builder.Services.AddTransient<TasksViewModel>();
         builder.Services.AddTransient<TaskEditViewModel>();
+        builder.Services.AddTransient<TaskDetailViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<ResourcesViewModel>();
@@ -50,6 +55,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MembersPage>();
         builder.Services.AddTransient<TasksPage>();
         builder.Services.AddTransient<TaskEditPage>();
+        builder.Services.AddTransient<TaskDetailPage>();
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<VideoPlayerPage>();

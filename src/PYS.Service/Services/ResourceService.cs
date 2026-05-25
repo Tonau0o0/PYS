@@ -269,6 +269,66 @@ public sealed class ResourceService : IResourceService
         return ServiceResult.Success();
     }
 
+    public async Task<ServiceResult<FileContent>> GetDownloadAsync(int projectId, int resourceId, CancellationToken cancellationToken = default)
+    {
+        if (_currentUser.UserId is not int uid)
+            return ServiceResult<FileContent>.Failure("Authentication required.");
+
+        if (!await HasAccessAsync(projectId, uid, cancellationToken))
+            return ServiceResult<FileContent>.NotFound($"Project {projectId} not found.");
+
+        var entity = await _resourceRepository.Query()
+            .FirstOrDefaultAsync(r => r.Id == resourceId && r.ProjectId == projectId, cancellationToken);
+        if (entity is null)
+            return ServiceResult<FileContent>.NotFound($"Resource {resourceId} not found.");
+
+        if (entity.Type == ResourceType.YouTube)
+            return ServiceResult<FileContent>.ValidationFailed(new[] { "YouTube videosu indirilemez." });
+
+        if (entity.Type == ResourceType.File)
+        {
+            var fc = _fileStorage.Open(entity.Url);
+            if (fc is null) return ServiceResult<FileContent>.NotFound("Dosya bulunamadı.");
+            return ServiceResult<FileContent>.Success(fc with { FileName = entity.FileName ?? fc.FileName });
+        }
+
+        // Klasör → tüm alt ağacı zip'le (klasör yapısını koruyarak).
+        var subtree = await CollectSubtreeAsync(projectId, resourceId, cancellationToken);
+        var byId = subtree.ToDictionary(r => r.Id);
+
+        var ms = new MemoryStream();
+        using (var archive = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var file in subtree.Where(r => r.Type == ResourceType.File))
+            {
+                var fc = _fileStorage.Open(file.Url);
+                if (fc is null) continue;
+                var entryName = BuildRelativePath(file, resourceId, byId);
+                var entry = archive.CreateEntry(entryName, System.IO.Compression.CompressionLevel.Fastest);
+                await using var entryStream = entry.Open();
+                await using (fc.Stream)
+                {
+                    await fc.Stream.CopyToAsync(entryStream, cancellationToken);
+                }
+            }
+        }
+        ms.Position = 0;
+        return ServiceResult<FileContent>.Success(new FileContent(ms, "application/zip", $"{entity.Title}.zip"));
+    }
+
+    /// <summary>Bir dosyanın, indirilen kök klasöre göre zip içi göreli yolunu üretir.</summary>
+    private static string BuildRelativePath(ProjectResource file, int rootFolderId, Dictionary<int, ProjectResource> byId)
+    {
+        var segments = new List<string> { file.FileName ?? file.Title };
+        var parentId = file.ParentFolderId;
+        while (parentId is int pid && pid != rootFolderId && byId.TryGetValue(pid, out var parent))
+        {
+            segments.Insert(0, parent.Title);
+            parentId = parent.ParentFolderId;
+        }
+        return string.Join("/", segments);
+    }
+
     // --- yardımcılar ---
 
     private async Task<bool> HasAccessAsync(int projectId, int uid, CancellationToken cancellationToken)

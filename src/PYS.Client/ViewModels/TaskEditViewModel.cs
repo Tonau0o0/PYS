@@ -15,7 +15,7 @@ namespace PYS.Client.ViewModels;
 public sealed partial class TaskEditViewModel : BaseViewModel
 {
     private readonly PysApi _api;
-    private readonly HttpClient _http;
+    private readonly ResourceDownloadService _downloader;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _membersLoaded;
     private bool _taskLoaded;
@@ -25,10 +25,10 @@ public sealed partial class TaskEditViewModel : BaseViewModel
 
     public bool IsExistingTask => TaskId is not null;
 
-    public TaskEditViewModel(PysApi api, HttpClient http)
+    public TaskEditViewModel(PysApi api, ResourceDownloadService downloader)
     {
         _api = api;
-        _http = http;
+        _downloader = downloader;
     }
 
     [ObservableProperty]
@@ -181,19 +181,15 @@ public sealed partial class TaskEditViewModel : BaseViewModel
             return;
         }
 
-        if (!item.IsFile || string.IsNullOrEmpty(item.Url)) return;
+        if (item.IsYouTube) return;
 
         try
         {
             IsBusy = true;
-            var bytes = await _http.GetByteArrayAsync($"{MauiProgram.ApiBaseUrl}{item.Url}");
-            var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-            Directory.CreateDirectory(downloads);
-            var target = Path.Combine(downloads, item.FileName ?? $"resource_{item.Id}");
-            await File.WriteAllBytesAsync(target, bytes);
-
-            var open = await Shell.Current.DisplayAlertAsync("İndirildi", target, "Aç", "Tamam");
-            if (open) await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(target) });
+            var path = await _downloader.DownloadAsync(ProjectId, item);
+            if (path is null) return; // iptal
+            var open = await Shell.Current.DisplayAlertAsync("İndirildi", path, "Aç", "Tamam");
+            if (open) await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(path) });
         }
         catch (Exception ex) { HandleException(ex); }
         finally { IsBusy = false; }

@@ -134,18 +134,8 @@ public sealed partial class TasksViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task TaskMenuAsync(TaskItem item)
-    {
-        if (item is null) return;
-
-        var choice = await Shell.Current.DisplayActionSheetAsync(
-            item.Title, "İptal", null, "Düzenle", "Sil");
-
-        if (choice == "Düzenle")
-            await Shell.Current.GoToAsync($"task-edit?id={item.Id}&projectId={item.ProjectId}");
-        else if (choice == "Sil")
-            await DeleteTaskAsync(item);
-    }
+    private static Task OpenTaskDetailAsync(TaskItem item)
+        => item is null ? Task.CompletedTask : Shell.Current.GoToAsync($"task-detail?id={item.Id}&projectId={item.ProjectId}");
 
     [RelayCommand]
     private async Task DeleteTaskAsync(TaskItem item)

@@ -102,6 +102,22 @@ public sealed record ProjectResourceItem(
     }
 }
 
+public sealed record TaskCommentItem(
+    int Id,
+    int TaskId,
+    string Content,
+    int AuthorId,
+    string AuthorName,
+    string? AuthorColor,
+    string? AuthorAvatarUrl,
+    DateTime CreatedAt)
+{
+    public string TimeText => CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+    public bool HasAvatar => !string.IsNullOrEmpty(AuthorAvatarUrl);
+}
+
+public sealed record AddCommentRequest(string Content);
+
 public sealed record AddYouTubeRequest(string Title, string Url, int? ParentFolderId);
 public sealed record CreateFolderRequest(string Name, int? ParentFolderId);
 public sealed record MoveResourceRequest(int? ParentFolderId);

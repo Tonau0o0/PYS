@@ -19,6 +19,9 @@ public interface IResourceService
 
     Task<ServiceResult> DeleteAsync(int projectId, int resourceId, CancellationToken cancellationToken = default);
 
+    /// <summary>Dosyayı olduğu gibi, klasörü ise içeriğini zip olarak indirilebilir akış döner.</summary>
+    Task<ServiceResult<PYS.Core.Abstractions.FileContent>> GetDownloadAsync(int projectId, int resourceId, CancellationToken cancellationToken = default);
+
     // Görev ↔ kaynak bağları
     Task<ServiceResult<IReadOnlyList<ProjectResourceDto>>> GetTaskResourcesAsync(int taskId, CancellationToken cancellationToken = default);
     Task<ServiceResult> LinkToTaskAsync(int taskId, int resourceId, CancellationToken cancellationToken = default);

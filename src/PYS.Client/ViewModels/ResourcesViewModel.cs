@@ -16,7 +16,7 @@ namespace PYS.Client.ViewModels;
 public sealed partial class ResourcesViewModel : BaseViewModel
 {
     private readonly PysApi _api;
-    private readonly HttpClient _http;
+    private readonly ResourceDownloadService _downloader;
 
     // Bulunduğumuz klasör yolu (boş = kök).
     private readonly List<(int Id, string Name)> _trail = new();
@@ -33,10 +33,10 @@ public sealed partial class ResourcesViewModel : BaseViewModel
     public bool IsInSubfolder => _trail.Count > 0;
     public string CurrentPathText => _trail.Count == 0 ? "Kök" : "Kök / " + string.Join(" / ", _trail.Select(t => t.Name));
 
-    public ResourcesViewModel(PysApi api, HttpClient http)
+    public ResourcesViewModel(PysApi api, ResourceDownloadService downloader)
     {
         _api = api;
-        _http = http;
+        _downloader = downloader;
     }
 
     public async Task LoadAsync()
@@ -177,19 +177,13 @@ public sealed partial class ResourcesViewModel : BaseViewModel
 
     private async Task DownloadFileAsync(ProjectResourceItem item)
     {
-        if (string.IsNullOrEmpty(item.Url)) return;
         try
         {
             IsBusy = true;
-            var bytes = await _http.GetByteArrayAsync($"{MauiProgram.ApiBaseUrl}{item.Url}");
-
-            var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-            Directory.CreateDirectory(downloads);
-            var target = Path.Combine(downloads, item.FileName ?? $"resource_{item.Id}");
-            await File.WriteAllBytesAsync(target, bytes);
-
-            var open = await Shell.Current.DisplayAlertAsync("İndirildi", target, "Aç", "Tamam");
-            if (open) await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(target) });
+            var path = await _downloader.DownloadAsync(ProjectId, item);
+            if (path is null) return; // iptal
+            var open = await Shell.Current.DisplayAlertAsync("İndirildi", path, "Aç", "Tamam");
+            if (open) await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(path) });
         }
         catch (Exception ex) { HandleException(ex); }
         finally { IsBusy = false; }

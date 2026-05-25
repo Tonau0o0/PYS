@@ -56,6 +56,20 @@ public static class TaskEndpoints
         group.MapDelete("/{id:int}", async (int id, ITaskService service, CancellationToken ct) =>
             (await service.DeleteAsync(id, ct)).ToHttp());
 
+        // Yorumlar
+        group.MapGet("/{taskId:int}/comments", async (int taskId, ICommentService service, CancellationToken ct) =>
+            (await service.GetForTaskAsync(taskId, ct)).ToHttp());
+
+        group.MapPost("/{taskId:int}/comments", async (int taskId, AddCommentDto dto, ICommentService service, CancellationToken ct) =>
+        {
+            var validation = DataAnnotationsValidator.Validate(dto);
+            if (validation is not null) return validation;
+            return (await service.AddAsync(taskId, dto, ct)).ToHttp();
+        });
+
+        group.MapDelete("/comments/{commentId:int}", async (int commentId, ICommentService service, CancellationToken ct) =>
+            (await service.DeleteAsync(commentId, ct)).ToHttp());
+
         return routes;
     }
 }

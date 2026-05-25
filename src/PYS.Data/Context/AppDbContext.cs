@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectInvitation> ProjectInvitations => Set<ProjectInvitation>();
     public DbSet<ProjectResource> ProjectResources => Set<ProjectResource>();
     public DbSet<TaskResource> TaskResources => Set<TaskResource>();
+    public DbSet<TaskComment> TaskComments => Set<TaskComment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

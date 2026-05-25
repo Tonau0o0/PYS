@@ -66,6 +66,9 @@ public sealed class PysApi
     public Task<TaskItem[]> GetTasksAsync(int? projectId, CancellationToken ct = default)
         => _api.GetAsync<TaskItem[]>(projectId.HasValue ? $"/api/tasks?projectId={projectId}" : "/api/tasks", ct);
 
+    public Task<TaskItem> GetTaskAsync(int id, CancellationToken ct = default)
+        => _api.GetAsync<TaskItem>($"/api/tasks/{id}", ct);
+
     public Task<TaskItem> CreateTaskAsync(CreateTaskRequest req, CancellationToken ct = default)
         => _api.PostAsync<TaskItem>("/api/tasks", req, ct);
 
@@ -96,6 +99,9 @@ public sealed class PysApi
     public Task MoveResourceAsync(int projectId, int resourceId, int? parentFolderId, CancellationToken ct = default)
         => _api.PutAsync($"/api/projects/{projectId}/resources/{resourceId}/move", new MoveResourceRequest(parentFolderId), ct);
 
+    public Task<byte[]> DownloadResourceBytesAsync(int projectId, int resourceId, CancellationToken ct = default)
+        => _api.GetBytesAsync($"/api/projects/{projectId}/resources/{resourceId}/download", ct);
+
     public Task DeleteResourceAsync(int projectId, int resourceId, CancellationToken ct = default)
         => _api.DeleteAsync($"/api/projects/{projectId}/resources/{resourceId}", ct);
 
@@ -108,4 +114,14 @@ public sealed class PysApi
 
     public Task UnlinkResourceFromTaskAsync(int taskId, int resourceId, CancellationToken ct = default)
         => _api.DeleteAsync($"/api/tasks/{taskId}/resources/{resourceId}", ct);
+
+    // Yorumlar
+    public Task<TaskCommentItem[]> GetCommentsAsync(int taskId, CancellationToken ct = default)
+        => _api.GetAsync<TaskCommentItem[]>($"/api/tasks/{taskId}/comments", ct);
+
+    public Task<TaskCommentItem> AddCommentAsync(int taskId, string content, CancellationToken ct = default)
+        => _api.PostAsync<TaskCommentItem>($"/api/tasks/{taskId}/comments", new AddCommentRequest(content), ct);
+
+    public Task DeleteCommentAsync(int commentId, CancellationToken ct = default)
+        => _api.DeleteAsync($"/api/tasks/comments/{commentId}", ct);
 }
