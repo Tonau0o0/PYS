@@ -17,10 +17,11 @@
 
 # Runtime / local
 crash.log
-Storage/                 # sunucu tarafı yüklenen dosyalar (proje kaynakları, avatarlar)
-**/wwwroot/avatars/      # yüklenen kullanıcı avatarları
-**/wwwroot/uploads/      # yüklenen proje kaynak dosyaları
 appsettings.*.local.json
+# sunucu tarafı yüklenen dosyalar (proje kaynakları, avatarlar)
+Storage/
+**/wwwroot/avatars/
+**/wwwroot/uploads/
 
 # OS
 .DS_Store
