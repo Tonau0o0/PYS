@@ -15,6 +15,11 @@ public sealed record AuthResponse(
     string UserName,
     string FullName,
     UserRole Role,
-    string Color);
+    string Color,
+    string? AvatarUrl);
 
 public sealed record UpdateColorRequest(string Color);
+
+public sealed record UpdateProfileRequest(string FullName);
+
+public sealed record UpdateEmailRequest(string Email);

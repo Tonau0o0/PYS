@@ -76,6 +76,20 @@ public sealed class ApiClient
         await EnsureSuccessAsync(res, ct);
     }
 
+    /// <summary>multipart/form-data ile tek dosya yükler (ör. avatar, proje kaynağı).</summary>
+    public async Task<T> PostFileAsync<T>(string path, Stream content, string fileName, string fieldName = "file", CancellationToken ct = default)
+    {
+        ApplyAuth();
+
+        using var form = new MultipartFormDataContent();
+        using var fileContent = new StreamContent(content);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, fieldName, fileName);
+
+        var res = await _http.PostAsync(path, form, ct);
+        return await ReadAsync<T>(res, ct);
+    }
+
     private void ApplyAuth()
     {
         var token = _auth.Current?.AccessToken;

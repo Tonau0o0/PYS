@@ -21,6 +21,15 @@ public sealed class PysApi
     public Task UpdateMyColorAsync(string color, CancellationToken ct = default)
         => _api.PutAsync("/api/auth/me/color", new UpdateColorRequest(color), ct);
 
+    public Task<AuthResponse> UpdateProfileAsync(string fullName, CancellationToken ct = default)
+        => _api.PutAsync<AuthResponse>("/api/auth/me/profile", new UpdateProfileRequest(fullName), ct);
+
+    public Task<AuthResponse> UpdateEmailAsync(string email, CancellationToken ct = default)
+        => _api.PutAsync<AuthResponse>("/api/auth/me/email", new UpdateEmailRequest(email), ct);
+
+    public Task<AuthResponse> UploadAvatarAsync(Stream content, string fileName, CancellationToken ct = default)
+        => _api.PostFileAsync<AuthResponse>("/api/auth/me/avatar", content, fileName, "file", ct);
+
     // Projects
     public Task<ProjectItem[]> GetProjectsAsync(int? status, CancellationToken ct = default)
         => _api.GetAsync<ProjectItem[]>(status.HasValue ? $"/api/projects?status={status}" : "/api/projects", ct);

@@ -67,6 +67,7 @@ public sealed class TaskService : ITaskService
                 t.ProjectId, t.Project!.Name,
                 t.AssigneeId, t.Assignee != null ? t.Assignee.UserName : null,
                 t.Assignee != null ? t.Assignee.ColorHex : null,
+                t.Assignee != null ? t.Assignee.AvatarUrl : null,
                 t.CreatedAt, t.CreatedBy, t.UpdatedAt, t.UpdatedBy))
             .ToListAsync(cancellationToken);
 

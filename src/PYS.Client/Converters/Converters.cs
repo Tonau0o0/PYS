@@ -47,6 +47,21 @@ public sealed class StringToColorConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>API'den gelen göreli yolu (ör. /avatars/x.png) mutlak URL'e çevirir; boşsa null döner.</summary>
+public sealed class ApiUrlConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string s || string.IsNullOrWhiteSpace(s)) return null;
+        if (s.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            s.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return s;
+        return $"{MauiProgram.ApiBaseUrl}{s}";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public sealed class InitialsConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

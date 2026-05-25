@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using PYS.API.Common;
 using PYS.API.Endpoints;
@@ -53,6 +54,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddSingleton<IFileStorage, PhysicalFileStorage>();
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddBusinessServices();
@@ -72,6 +74,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+
+// Avatar + proje dosyalarını servis et. wwwroot startup'ta var olmalı; aksi halde
+// statik middleware boş file provider'a bağlanır ve runtime'da yüklenen dosyalar görünmez.
+var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(webRoot)
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 

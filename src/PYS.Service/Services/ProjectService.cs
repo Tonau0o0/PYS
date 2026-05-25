@@ -240,7 +240,7 @@ public sealed class ProjectService : IProjectService
             .OrderByDescending(m => m.Role)
             .ThenBy(m => m.JoinedAt)
             .Select(m => new ProjectMemberDto(
-                m.UserId, m.User!.UserName, m.User.Email, m.User.FullName, m.Role, m.User.ColorHex, m.JoinedAt))
+                m.UserId, m.User!.UserName, m.User.Email, m.User.FullName, m.Role, m.User.ColorHex, m.User.AvatarUrl, m.JoinedAt))
             .ToListAsync(cancellationToken);
 
         return ServiceResult<IReadOnlyList<ProjectMemberDto>>.Success(members);

@@ -28,6 +28,7 @@ public sealed record ProjectMemberItem(
     string FullName,
     ProjectRole Role,
     string Color,
+    string? AvatarUrl,
     DateTime JoinedAt);
 
 public sealed record InvitationItem(
@@ -50,6 +51,7 @@ public sealed record TaskItem(
     int? AssigneeId,
     string? AssigneeUserName,
     string? AssigneeColor,
+    string? AssigneeAvatarUrl,
     DateTime CreatedAt,
     string? CreatedBy,
     DateTime? UpdatedAt,

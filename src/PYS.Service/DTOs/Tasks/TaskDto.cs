@@ -16,6 +16,7 @@ public sealed record TaskDto(
     int? AssigneeId,
     string? AssigneeUserName,
     string? AssigneeColor,
+    string? AssigneeAvatarUrl,
     DateTime CreatedAt,
     string? CreatedBy,
     DateTime? UpdatedAt,

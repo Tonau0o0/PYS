@@ -77,6 +77,48 @@ public static class AuthEndpoints
         })
         .RequireAuthorization();
 
+        group.MapPut("/me/profile", async (
+            UpdateProfileDto dto,
+            ClaimsPrincipal user,
+            IAuthService service,
+            CancellationToken ct) =>
+        {
+            var validation = DataAnnotationsValidator.Validate(dto);
+            if (validation is not null) return validation;
+            if (!user.TryGetUserId(out var userId)) return Results.Unauthorized();
+            return (await service.UpdateProfileAsync(userId, dto, ct)).ToHttp();
+        })
+        .RequireAuthorization();
+
+        group.MapPut("/me/email", async (
+            UpdateEmailDto dto,
+            ClaimsPrincipal user,
+            IAuthService service,
+            CancellationToken ct) =>
+        {
+            var validation = DataAnnotationsValidator.Validate(dto);
+            if (validation is not null) return validation;
+            if (!user.TryGetUserId(out var userId)) return Results.Unauthorized();
+            return (await service.UpdateEmailAsync(userId, dto, ct)).ToHttp();
+        })
+        .RequireAuthorization();
+
+        group.MapPost("/me/avatar", async (
+            IFormFile file,
+            ClaimsPrincipal user,
+            IAuthService service,
+            CancellationToken ct) =>
+        {
+            if (file is null || file.Length == 0) return Results.BadRequest(new { error = "No file uploaded." });
+            if (file.Length > 25 * 1024 * 1024) return Results.BadRequest(new { error = "File exceeds 25 MB limit." });
+            if (!user.TryGetUserId(out var userId)) return Results.Unauthorized();
+
+            await using var stream = file.OpenReadStream();
+            return (await service.UpdateAvatarAsync(userId, stream, file.FileName, ct)).ToHttp();
+        })
+        .RequireAuthorization()
+        .DisableAntiforgery();
+
         return routes;
     }
 }

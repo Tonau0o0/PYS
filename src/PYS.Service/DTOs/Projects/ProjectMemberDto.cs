@@ -9,6 +9,7 @@ public sealed record ProjectMemberDto(
     string FullName,
     ProjectRole Role,
     string Color,
+    string? AvatarUrl,
     DateTime JoinedAt);
 
 public sealed record ProjectInvitationDto(

@@ -9,4 +9,5 @@ public sealed record AuthResponseDto(
     string UserName,
     string FullName,
     UserRole Role,
-    string Color);
+    string Color,
+    string? AvatarUrl);

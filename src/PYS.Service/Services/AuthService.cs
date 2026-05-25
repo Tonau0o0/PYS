@@ -14,17 +14,22 @@ public sealed class AuthService : IAuthService
     private readonly IRepository<ProjectInvitation> _invitationRepository;
     private readonly IRepository<ProjectMember> _memberRepository;
     private readonly ITokenService _tokenService;
+    private readonly IFileStorage _fileStorage;
+
+    private static readonly string[] AllowedAvatarExtensions = { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp" };
 
     public AuthService(
         IRepository<User> userRepository,
         IRepository<ProjectInvitation> invitationRepository,
         IRepository<ProjectMember> memberRepository,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IFileStorage fileStorage)
     {
         _userRepository = userRepository;
         _invitationRepository = invitationRepository;
         _memberRepository = memberRepository;
         _tokenService = tokenService;
+        _fileStorage = fileStorage;
     }
 
     public async Task<ServiceResult<AuthResponseDto>> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -162,9 +167,81 @@ public sealed class AuthService : IAuthService
         return ServiceResult.Success();
     }
 
+    public async Task<ServiceResult<AuthResponseDto>> UpdateProfileAsync(int userId, UpdateProfileDto dto, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.Query(asNoTracking: false)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<AuthResponseDto>.NotFound($"User {userId} not found.");
+        }
+
+        user.FullName = dto.FullName.Trim();
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<AuthResponseDto>.Success(BuildAuthResponse(user));
+    }
+
+    public async Task<ServiceResult<AuthResponseDto>> UpdateAvatarAsync(int userId, Stream content, string fileName, CancellationToken cancellationToken = default)
+    {
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrWhiteSpace(ext) || !AllowedAvatarExtensions.Contains(ext.ToLowerInvariant()))
+        {
+            return ServiceResult<AuthResponseDto>.ValidationFailed(new[] { "Avatar must be an image (png, jpg, gif, webp, bmp)." });
+        }
+
+        var user = await _userRepository.Query(asNoTracking: false)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<AuthResponseDto>.NotFound($"User {userId} not found.");
+        }
+
+        var oldAvatar = user.AvatarUrl;
+        var relativeUrl = await _fileStorage.SaveAsync("avatars", fileName, content, cancellationToken);
+
+        user.AvatarUrl = relativeUrl;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        await _fileStorage.DeleteAsync(oldAvatar, cancellationToken); // eski dosyayı temizle
+
+        return ServiceResult<AuthResponseDto>.Success(BuildAuthResponse(user));
+    }
+
+    public async Task<ServiceResult<AuthResponseDto>> UpdateEmailAsync(int userId, UpdateEmailDto dto, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+
+        var inUse = await _userRepository.Query()
+            .AnyAsync(u => u.Email == normalizedEmail && u.Id != userId, cancellationToken);
+
+        if (inUse)
+        {
+            return ServiceResult<AuthResponseDto>.Conflict("Email is already in use.");
+        }
+
+        var user = await _userRepository.Query(asNoTracking: false)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<AuthResponseDto>.NotFound($"User {userId} not found.");
+        }
+
+        user.Email = normalizedEmail;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<AuthResponseDto>.Success(BuildAuthResponse(user));
+    }
+
     private AuthResponseDto BuildAuthResponse(User user)
     {
         var (token, expiresAt) = _tokenService.GenerateAccessToken(user);
-        return new AuthResponseDto(token, expiresAt, user.Id, user.UserName, user.FullName, user.Role, user.ColorHex);
+        return new AuthResponseDto(token, expiresAt, user.Id, user.UserName, user.FullName, user.Role, user.ColorHex, user.AvatarUrl);
     }
 }

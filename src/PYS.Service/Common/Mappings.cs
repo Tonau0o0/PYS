@@ -24,6 +24,6 @@ internal static class Mappings
         t.Id, t.Title, t.Description, t.Status, t.Priority,
         t.DueDate, t.CompletedAt,
         t.ProjectId, t.Project?.Name,
-        t.AssigneeId, t.Assignee?.UserName, t.Assignee?.ColorHex,
+        t.AssigneeId, t.Assignee?.UserName, t.Assignee?.ColorHex, t.Assignee?.AvatarUrl,
         t.CreatedAt, t.CreatedBy, t.UpdatedAt, t.UpdatedBy);
 }

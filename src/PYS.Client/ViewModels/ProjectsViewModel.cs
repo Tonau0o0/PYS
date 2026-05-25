@@ -31,11 +31,27 @@ public sealed partial class ProjectsViewModel : BaseViewModel
     private bool _isRefreshing;
 
     public string GreetingText => _auth.Current is null ? string.Empty : $"Merhaba {_auth.Current.FullName}";
+    public string CurrentUserName => _auth.Current?.FullName ?? string.Empty;
+    public string CurrentColor => _auth.Current?.Color ?? "#2196F3";
+    public string? CurrentAvatarUrl => _auth.Current?.AvatarUrl;
+    public bool HasAvatar => !string.IsNullOrEmpty(_auth.Current?.AvatarUrl);
 
     public ProjectsViewModel(PysApi api, AuthState auth)
     {
         _api = api;
         _auth = auth;
+
+        // Profil (isim/avatar) değişince ana menü başlığı kendini tazelesin.
+        _auth.Changed += OnAuthChanged;
+    }
+
+    private void OnAuthChanged(object? sender, Models.AuthResponse? e)
+    {
+        OnPropertyChanged(nameof(GreetingText));
+        OnPropertyChanged(nameof(CurrentUserName));
+        OnPropertyChanged(nameof(CurrentColor));
+        OnPropertyChanged(nameof(CurrentAvatarUrl));
+        OnPropertyChanged(nameof(HasAvatar));
     }
 
     partial void OnSelectedStatusChanged(ProjectStatus? value) => FireAndForget(LoadAsync);

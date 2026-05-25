@@ -24,6 +24,9 @@ public class User : BaseEntity
     [Required, MaxLength(9)]
     public string ColorHex { get; set; } = "#2196F3";
 
+    [MaxLength(256)]
+    public string? AvatarUrl { get; set; }
+
     public ICollection<Project> OwnedProjects { get; set; } = new List<Project>();
     public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();
     public ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
